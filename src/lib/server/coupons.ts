@@ -32,6 +32,6 @@ export async function validateCouponCode(tx: Tx, code: string, subtotal: number,
 
 /** Atomically takes one use of a coupon; false when the usage limit was reached in the meantime. */
 export async function consumeCoupon(tx: Tx, couponId: string) {
-  const n = await tx.$executeRaw`UPDATE "Coupon" SET "usedCount" = "usedCount" + 1 WHERE "id" = ${couponId} AND ("usageLimit" IS NULL OR "usedCount" < "usageLimit")`;
+  const n = await tx.$executeRaw`UPDATE public."Coupon" SET "usedCount" = "usedCount" + 1 WHERE "id" = ${couponId} AND ("usageLimit" IS NULL OR "usedCount" < "usageLimit")`;
   return n === 1;
 }

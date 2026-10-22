@@ -10,7 +10,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("JBR_DATABASE_URL")
+  url       = env("JBR_DATABASE_URL")
+  directUrl = env("JBR_DIRECT_URL")
 }
 
 enum Role {

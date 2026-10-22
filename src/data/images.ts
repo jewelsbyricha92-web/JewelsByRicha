@@ -1,8 +1,13 @@
+import urls from "./cloudinary-urls.json";
+
 /**
  * Editorial photography for banners (Unsplash, free licence) — stand-ins until Richa's own photos are supplied.
- * Files live in /public/images/hero. Product photos come from the database.
+ * Served from Cloudinary (see scripts/migrate-images-to-cloudinary.mjs); falls back to the local copy in /public/images.
  */
-export const hero = (id: string) => `/images/hero/${id}.jpg`;
+const map = urls as Record<string, string>;
+/** Maps a local /images/... path to its Cloudinary URL. */
+export const cdn = (localPath: string) => map[localPath] ?? localPath;
+export const hero = (id: string) => cdn(`/images/hero/${id}.jpg`);
 
 export const HERO = {
   necklace: hero("1620656798579-1984d9e87df7"),

@@ -4,8 +4,10 @@ import type { ArtKind } from "../../src/types/shop";
  * Stock photography (Unsplash, free licence) used as stand-ins until Richa's own product photos are uploaded.
  * Files live in /public/images/stock and /public/images/hero.
  */
-const s = (id: string) => `/images/stock/${id}.jpg`;
-const hero = (id: string) => `/images/hero/${id}.jpg`;
+import urls from "../../src/data/cloudinary-urls.json";
+const cdn = (p: string) => (urls as Record<string, string>)[p] ?? p;
+const s = (id: string) => cdn(`/images/stock/${id}.jpg`);
+const hero = (id: string) => cdn(`/images/hero/${id}.jpg`);
 
 /** Image pools per jewellery type — products draw their gallery from these. */
 export const POOLS: Record<ArtKind, string[]> = {

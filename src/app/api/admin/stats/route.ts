@@ -19,14 +19,14 @@ export const GET = handle(async () => {
     prisma.product.groupBy({ by: ["status"], _count: { _all: true } }),
     prisma.$queryRaw<{ day: string; revenue: bigint; orders: bigint }[]>`
       SELECT to_char(("createdAt" AT TIME ZONE 'Asia/Kolkata')::date, 'YYYY-MM-DD') AS day, SUM(total) AS revenue, COUNT(*) AS orders
-      FROM "Order" WHERE status <> 'CANCELLED' AND "createdAt" >= ${since}
+      FROM public."Order" WHERE status <> 'CANCELLED' AND "createdAt" >= ${since}
       GROUP BY 1 ORDER BY 1`,
     prisma.$queryRaw<{ name: string; value: bigint }[]>`
       SELECT c.name AS name, SUM(oi.price * oi.quantity) AS value
-      FROM "OrderItem" oi
-      JOIN "Order" o ON o.id = oi."orderId"
-      JOIN "Product" p ON p.id = oi."productId"
-      JOIN "Category" c ON c.id = p."categoryId"
+      FROM public."OrderItem" oi
+      JOIN public."Order" o ON o.id = oi."orderId"
+      JOIN public."Product" p ON p.id = oi."productId"
+      JOIN public."Category" c ON c.id = p."categoryId"
       WHERE o.status <> 'CANCELLED' AND o."createdAt" >= ${since}
       GROUP BY c.name ORDER BY value DESC LIMIT 6`,
     prisma.order.findMany({ include: { items: true }, orderBy: { createdAt: "desc" }, take: 6 }),

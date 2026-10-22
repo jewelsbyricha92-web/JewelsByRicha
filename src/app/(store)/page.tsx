@@ -9,7 +9,7 @@ import { useCatalog } from "@/context/CatalogContext";
 import { ProductGrid } from "@/components/ui/ProductCard";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { SectionHead } from "@/components/ui/SectionHead";
-import { HERO } from "@/data/images";
+import { HERO, cdn } from "@/data/images";
 import { categoryCover } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ const REVIEWS = [
   { name: "Simran Kaur", city: "Chandigarh", item: "Snake Chain Necklace", text: "Finally jewellery that doesn't turn my neck green. Light, elegant and I never take it off." },
 ];
 
-const INSTA = ["/images/hero/1777999745587-31af0844db6c.jpg", "/images/stock/1631982690223-8aa4be0a2497.jpg", "/images/stock/1762686130435-897de4b26aac.jpg", "/images/stock/1602173574767-37ac01994b2a.jpg", "/images/stock/1783541507490-edb026e2a961.jpg", "/images/stock/1572545884955-6f3d7b6540a0.jpg"];
+const INSTA = ["/images/hero/1777999745587-31af0844db6c.jpg", "/images/stock/1631982690223-8aa4be0a2497.jpg", "/images/stock/1762686130435-897de4b26aac.jpg", "/images/stock/1602173574767-37ac01994b2a.jpg", "/images/stock/1783541507490-edb026e2a961.jpg", "/images/stock/1572545884955-6f3d7b6540a0.jpg"].map(cdn);
 
 export default function HomePage() {
   const { products, categories, collections, settings } = useCatalog();

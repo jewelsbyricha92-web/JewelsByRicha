@@ -106,7 +106,7 @@ async function restoreOrder(tx: Tx, orderId: string) {
   if (!o || o.stockRestored) return;
   for (const i of o.items) if (i.productId) await tx.product.updateMany({ where: { id: i.productId }, data: { stock: { increment: i.quantity } } });
   if (o.coupon) {
-    await tx.$executeRaw`UPDATE "Coupon" SET "usedCount" = GREATEST("usedCount" - 1, 0) WHERE "id" = ${o.coupon.couponId}`;
+    await tx.$executeRaw`UPDATE public."Coupon" SET "usedCount" = GREATEST("usedCount" - 1, 0) WHERE "id" = ${o.coupon.couponId}`;
     await tx.couponUsage.delete({ where: { id: o.coupon.id } });
   }
   await tx.order.update({ where: { id: orderId }, data: { stockRestored: true } });
