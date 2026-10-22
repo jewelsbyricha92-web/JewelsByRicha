@@ -10,7 +10,7 @@ export const BRAND = {
     address: "India",
   },
   social: {
-    instagram: "jewelsbyricha",
+    instagram: "jewels_by_richa",
   },
   courier: {
     name: "Courier partner",

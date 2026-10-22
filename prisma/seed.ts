@@ -22,7 +22,7 @@ const DEFAULT_SETTINGS = {
   contactEmail: "hello@jewelsbyricha.in",
   contactPhone: "+91 90000 00000",
   businessHours: "Monday to Saturday, 10:00 a.m. to 6:00 p.m.",
-  instagram: "jewelsbyricha",
+  instagram: "jewels_by_richa",
   lowStockThreshold: 5,
 };
 

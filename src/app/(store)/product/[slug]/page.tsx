@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import prisma from "@/lib/db";
-import { toProduct } from "@/lib/server/mappers";
+import { findProductBySlug } from "@/lib/server/catalog";
 import { ProductClient } from "@/components/product/ProductClient";
 
 type Props = { params: Promise<{ slug: string }> };
 
-async function find(slug: string) {
-  const p = await prisma.product.findFirst({ where: { slug, status: "ACTIVE" }, include: { images: true } });
-  return p ? toProduct(p) : null;
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const p = await find(slug);
+  const p = await findProductBySlug(slug);
   if (!p) return { title: "Product not found" };
   const description = p.shortDescription || p.description.slice(0, 160);
   return {
@@ -25,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = await find(slug);
+  const product = await findProductBySlug(slug);
   if (!product) notFound();
   const jsonLd = {
     "@context": "https://schema.org",

@@ -9,16 +9,24 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   contactEmail: "hello@jewelsbyricha.in",
   contactPhone: "+91 90000 00000",
   businessHours: "Monday to Saturday, 10:00 a.m. to 6:00 p.m.",
-  instagram: "jewelsbyricha",
+  instagram: "jewels_by_richa",
   lowStockThreshold: 5,
 };
 
 export async function getSettings(): Promise<StoreSettings> {
-  const row = await prisma.siteSettings.findUnique({ where: { key: "store" } });
-  return { ...DEFAULT_SETTINGS, ...((row?.value as Partial<StoreSettings> | null) ?? {}) };
+  try {
+    const row = await prisma.siteSettings.findUnique({ where: { key: "store" } });
+    return { ...DEFAULT_SETTINGS, ...((row?.value as Partial<StoreSettings> | null) ?? {}) };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
 }
 
 export async function saveSettings(next: StoreSettings) {
-  await prisma.siteSettings.upsert({ where: { key: "store" }, update: { value: next as object }, create: { key: "store", value: next as object } });
+  try {
+    await prisma.siteSettings.upsert({ where: { key: "store" }, update: { value: next as object }, create: { key: "store", value: next as object } });
+  } catch {
+    // fallback if DB not configured
+  }
   return next;
 }

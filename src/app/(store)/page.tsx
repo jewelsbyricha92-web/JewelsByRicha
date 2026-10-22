@@ -199,40 +199,39 @@ export default function HomePage() {
 
 
 
-      {/* ───────── REVIEWS (Unique 3-Color Luxury Mix: Black, Dark Espresso, Rose-Blush & Gold) ───────── */}
+      {/* ───────── REVIEWS (Half Light, Half Dark Mix) ───────── */}
       <section
-        className="relative isolate overflow-hidden border-y border-[#362923] py-22 text-ivory md:py-32"
+        className="relative isolate overflow-hidden border-t border-[#ebd8cc] border-b border-[#362923] py-20 md:py-32"
         style={{
-          background: "linear-gradient(135deg, #0c0808 0%, #1c110e 25%, #2a161d 55%, #281d17 80%, #120c0a 100%)",
+          background: "linear-gradient(180deg, #faf3ec 0%, #faf3ec 42%, #18110e 48%, #120c09 100%)",
         }}
       >
-        {/* Color 1: Champagne Gold halo behind title */}
-        <div className="pointer-events-none absolute -top-20 left-1/2 h-[380px] w-[600px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(212,174,88,0.25),transparent_70%)] blur-2xl" />
+        {/* Light Zone: Champagne Gold Bloom behind Title */}
+        <div className="pointer-events-none absolute -top-16 left-1/2 h-[340px] w-[550px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(212,174,88,0.22),transparent_70%)] blur-2xl" />
 
-        {/* Color 2: Luminous Rose-Blush Pink ambient warmth from bottom-left */}
-        <div className="pointer-events-none absolute -bottom-24 -left-20 h-[420px] w-[500px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(246,215,205,0.18),transparent_70%)] blur-3xl" />
-
-        {/* Color 3: Warm Bronze / Dark Beige glow from bottom-right */}
-        <div className="pointer-events-none absolute -bottom-24 -right-20 h-[420px] w-[500px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(196,145,95,0.22),transparent_70%)] blur-3xl" />
+        {/* Dark Zone: Amber Bronze Glow across Lower Cards */}
+        <div className="pointer-events-none absolute -bottom-24 left-1/2 h-[380px] w-[750px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(196,145,95,0.2),transparent_70%)] blur-3xl" />
 
         <div className="relative z-10 mx-auto max-w-7xl px-5 md:px-10">
-          <motion.div {...rise}><SectionHead eyebrow="Kind words" title="Loved by our customers" dark={true} /></motion.div>
+          <motion.div {...rise} className="mb-14">
+            <SectionHead eyebrow="Kind words" title="Loved by our customers" dark={false} />
+          </motion.div>
           <div className="hide-scrollbar -mx-5 flex scroll-px-5 snap-x snap-mandatory gap-4 overflow-x-auto px-5 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0">
             {REVIEWS.map((r, i) => (
               <motion.figure
                 key={r.name}
                 {...rise}
                 transition={{ ...rise.transition, delay: i * 0.1 }}
-                className="relative w-[84%] shrink-0 snap-start rounded-2xl border border-[#c49e49]/30 bg-gradient-to-b from-[#251915]/90 via-[#1d1310]/92 to-[#140d0b]/95 p-8 backdrop-blur-md transition-all duration-500 hover:border-[#c49e49]/60 hover:-translate-y-1 md:w-auto md:p-9"
+                className="relative w-[84%] shrink-0 snap-start rounded-2xl border border-[#c49e49]/35 bg-gradient-to-b from-[#251914] via-[#1c120e] to-[#120c09] p-8 text-ivory backdrop-blur-md transition-all duration-500 hover:border-[#d4ae58]/70 hover:-translate-y-1.5 md:w-auto md:p-9"
                 style={{
-                  boxShadow: "0 18px 42px -12px rgba(8, 6, 5, 0.7), inset 0 1px 0 rgba(232, 204, 160, 0.2)",
+                  boxShadow: "0 22px 48px -12px rgba(8, 6, 5, 0.75), inset 0 1px 0 rgba(232, 204, 160, 0.22)",
                 }}
               >
                 <Quote className="absolute right-6 top-6 h-8 w-8 text-[#d4ae58]/35" />
                 <div className="mb-4 flex gap-0.5">{Array.from({ length: 5 }).map((_, k) => <Star key={k} className="h-4 w-4 fill-[#d4ae58] text-[#d4ae58]" />)}</div>
                 <blockquote className="font-serif text-[1.35rem] leading-snug text-ivory/95">{r.text}</blockquote>
-                <figcaption className="mt-6 flex items-center gap-3 border-t border-[#362923]/80 pt-5">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4ae58]/40 bg-gradient-to-br from-[#2c1d18] to-[#120d0b] font-serif text-[#e8cca0] shadow-sm">{r.name[0]}</span>
+                <figcaption className="mt-6 flex items-center gap-3 border-t border-[#362923] pt-5">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4ae58]/45 bg-gradient-to-br from-[#2c1d18] to-[#120d0b] font-serif text-[#e8cca0] shadow-sm">{r.name[0]}</span>
                   <span className="text-sm leading-tight text-ivory"><b className="font-medium text-ivory">{r.name}</b><br /><span className="text-xs text-ivory/55">{r.city} · {r.item}</span></span>
                 </figcaption>
               </motion.figure>
@@ -264,3 +263,4 @@ export default function HomePage() {
     </>
   );
 }
+

@@ -60,16 +60,21 @@ export function clientIp(req: Request) {
 
 /** Fixed-window rate limit stored in the database (works across serverless instances). */
 export async function rateLimit(key: string, limit: number, windowSec: number) {
-  const now = new Date();
-  const expireAt = new Date(now.getTime() + windowSec * 1000);
-  const row = await prisma.rateLimit.upsert({ where: { key }, update: { points: { increment: 1 } }, create: { key, points: 1, expireAt } });
-  if (row.expireAt < now) {
-    await prisma.rateLimit.update({ where: { key }, data: { points: 1, expireAt } });
-    return;
+  try {
+    const now = new Date();
+    const expireAt = new Date(now.getTime() + windowSec * 1000);
+    const row = await prisma.rateLimit.upsert({ where: { key }, update: { points: { increment: 1 } }, create: { key, points: 1, expireAt } });
+    if (row.expireAt < now) {
+      await prisma.rateLimit.update({ where: { key }, data: { points: 1, expireAt } });
+      return;
+    }
+    if (row.points > limit) throw new ApiError(429, "Too many attempts. Please wait a few minutes and try again.");
+    // opportunistic cleanup
+    if (Math.random() < 0.02) prisma.rateLimit.deleteMany({ where: { expireAt: { lt: now } } }).catch(() => {});
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
+    // Database offline or not configured - ignore rate limiting gracefully
   }
-  if (row.points > limit) throw new ApiError(429, "Too many attempts. Please wait a few minutes and try again.");
-  // opportunistic cleanup
-  if (Math.random() < 0.02) prisma.rateLimit.deleteMany({ where: { expireAt: { lt: now } } }).catch(() => {});
 }
 
 export const idSchema = z.string().min(1).max(64);

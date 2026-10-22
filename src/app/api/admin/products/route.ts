@@ -6,6 +6,7 @@ import { toProduct } from "@/lib/server/mappers";
 import { pageMeta, paging } from "@/lib/server/paging";
 import { productData } from "@/lib/server/product-data";
 import { getSettings } from "@/lib/server/settings";
+import { PRODUCTS } from "../../../../../prisma/seed-data/products";
 
 export const dynamic = "force-dynamic";
 
@@ -19,17 +20,31 @@ export const GET = handle(async (req: Request) => {
   const status = params.get("status");
   const stock = params.get("stock");
 
-  const where: Prisma.ProductWhereInput = {
-    ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
-    ...(category && category !== "all" ? { categoryId: category } : {}),
-    ...(status === "ACTIVE" || status === "DRAFT" ? { status } : {}),
-    ...(stock === "out" ? { stock: 0 } : stock === "low" ? { stock: { gt: 0, lte: settings.lowStockThreshold } } : stock === "ok" ? { stock: { gt: settings.lowStockThreshold } } : {}),
-  };
-  const [total, rows] = await Promise.all([
-    prisma.product.count({ where }),
-    prisma.product.findMany({ where, include: { images: true }, orderBy: { createdAt: "desc" }, skip, take }),
-  ]);
-  return ok({ products: rows.map(toProduct), ...pageMeta(page, pageSize, total) });
+  try {
+    const where: Prisma.ProductWhereInput = {
+      ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
+      ...(category && category !== "all" ? { categoryId: category } : {}),
+      ...(status === "ACTIVE" || status === "DRAFT" ? { status } : {}),
+      ...(stock === "out" ? { stock: 0 } : stock === "low" ? { stock: { gt: 0, lte: settings.lowStockThreshold } } : stock === "ok" ? { stock: { gt: settings.lowStockThreshold } } : {}),
+    };
+    const [total, rows] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({ where, include: { images: true }, orderBy: { createdAt: "desc" }, skip, take }),
+    ]);
+    return ok({ products: rows.map(toProduct), ...pageMeta(page, pageSize, total) });
+  } catch (err) {
+    console.warn("Notice: Database offline during product fetch, serving bundled products.", err);
+    let filtered = [...PRODUCTS];
+    if (q) {
+      const lower = q.toLowerCase();
+      filtered = filtered.filter((p) => p.name.toLowerCase().includes(lower));
+    }
+    if (category && category !== "all") {
+      filtered = filtered.filter((p) => p.categoryId === category);
+    }
+    const sliced = filtered.slice(skip, skip + take);
+    return ok({ products: sliced, ...pageMeta(page, pageSize, filtered.length) });
+  }
 });
 
 export const POST = handle(async (req: Request) => {
