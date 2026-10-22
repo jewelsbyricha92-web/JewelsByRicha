@@ -21,7 +21,7 @@ npm run dev                   # http://localhost:3010
   are printed in the server console.
 - `npm run db:studio` opens a visual database browser.
 - `npm run test:smoke` runs 50+ end-to-end checks against the running server (needs `ADMIN_SEED_PASSWORD` in `.env`; it creates and cancels a few test orders, so don't point it at production).
-- `GET /api/health` is the uptime-check endpoint; `/api/cron/expire-orders` (scheduled in `vercel.json`, secured by `CRON_SECRET`) releases stock from abandoned online orders.
+- `GET /api/health` is the uptime-check endpoint. Unpaid online orders are released automatically whenever an order is placed or the admin panel is opened; `/api/cron/expire-orders` (secured by `CRON_SECRET`) can also be called by any external scheduler if you want a fixed schedule.
 
 ## What's in the box
 

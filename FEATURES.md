@@ -63,7 +63,7 @@ Sidebar badges show pending orders and unread messages.
 - **Tables:** User, Address, Collection, Category, Product, ProductImage, Order, OrderItem, Payment, WebhookEvent, Coupon, CouponUsage, WishlistItem, ContactMessage, Subscriber, VerificationCode, RateLimit, SiteSettings, Counter.
 - **Orders are priced on the server** from the database — the browser only sends product ids and quantities, so prices can't be tampered with.
 - **Atomic checkout:** stock reservation and coupon consumption happen in one database transaction; overselling and double coupon use are prevented. Order numbers (`JBR-1001…`) come from an atomic counter.
-- **Cancel / expiry** returns stock and the coupon use. Unpaid online orders are **auto-cancelled after 1 hour** by a scheduled job.
+- **Cancel / expiry** returns stock and the coupon use. Unpaid online orders are **auto-cancelled after 1 hour** (cleaned up on the next order or admin visit).
 - **Payments (needs keys):** Razorpay order creation, **signature verification + a second check against Razorpay's API** (amount and order must match), idempotent **webhook** (duplicate events ignored), retry-payment for pending orders. Without keys, a **mock payment mode** works in development only and is disabled in production.
 - **Emails (needs keys):** OTP, order confirmation, shipped, cancelled, contact notification — branded HTML + plain text. In development they print to the server console.
 - **Uploads (needs keys for Cloudinary):** type is verified from the file's actual bytes (JPEG / PNG / WEBP), 8 MB limit; Cloudinary in production, local disk in development.
@@ -92,7 +92,7 @@ Sidebar badges show pending orders and unread messages.
 ## 5. Reliability & performance
 
 - `/api/health` endpoint (checks the database) for uptime monitors.
-- Scheduled cleanup (`vercel.json` cron → `/api/cron/expire-orders`, secured by `CRON_SECRET`): releases stock from abandoned online orders and deletes expired OTP / rate-limit rows.
+- Abandoned-order cleanup: unpaid online orders are released automatically whenever an order is placed or the admin panel is opened. A secured endpoint (`/api/cron/expire-orders`, `CRON_SECRET`) is available if a fixed schedule is wanted later — no Vercel cron is configured, so the free Hobby plan works.
 - **Pagination everywhere it matters:** admin products, orders, customers, messages; customer order history; shop listing.
 - Lean storefront payload (long text fields omitted from listing data; full detail loaded per product), lazy-loaded images, database indexes on the hot query columns, aggregated dashboard queries.
 - Error pages: friendly error screens with a reference code for store and admin, a last-resort global error page, custom 404.
