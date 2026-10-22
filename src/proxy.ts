@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { unsealData } from "iron-session";
+import { getSecret } from "@/lib/server/secret";
 
 /**
  * First line of defence, runs before every page and API call:
@@ -8,7 +9,6 @@ import { unsealData } from "iron-session";
  *  3. Sends visitors without a valid session away from /admin and /account, and rejects unauthenticated /api/admin calls.
  * Every route handler ALSO re-checks the session and role against the database.
  */
-const SECRET = process.env.SESSION_SECRET || "dev-only-session-secret-change-me-32chars!!";
 
 // ---- coarse limiter (per server instance) ----
 const WINDOW_MS = 60_000;
@@ -31,7 +31,7 @@ async function hasSession(req: NextRequest, cookie: string, role?: string) {
   const raw = req.cookies.get(cookie)?.value;
   if (!raw) return false;
   try {
-    const data = await unsealData<{ userId?: string; role?: string }>(raw, { password: SECRET });
+    const data = await unsealData<{ userId?: string; role?: string }>(raw, { password: getSecret() });
     return !!data.userId && (!role || data.role === role);
   } catch {
     return false;

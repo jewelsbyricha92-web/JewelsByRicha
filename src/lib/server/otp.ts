@@ -1,11 +1,12 @@
 import crypto from "crypto";
+import { getSecret } from "./secret";
 import prisma from "@/lib/db";
 
 export type OtpPurpose = "register" | "reset";
 const TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
-const secret = () => process.env.SESSION_SECRET || "dev-only-session-secret-change-me-32chars!!";
+const secret = () => getSecret();
 const hash = (key: string, otp: string) => crypto.createHmac("sha256", secret()).update(`${key}:${otp}`).digest("hex");
 const same = (a: string, b: string) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 

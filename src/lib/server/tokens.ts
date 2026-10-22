@@ -1,6 +1,7 @@
 import crypto from "crypto";
+import { getSecret } from "./secret";
 
-const secret = () => process.env.SESSION_SECRET || "dev-only-session-secret-change-me-32chars!!";
+const secret = () => getSecret();
 
 /** Unguessable token that lets a guest (no account) look at / pay for the order they just placed. */
 export function orderToken(number: string, email: string) {

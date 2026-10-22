@@ -2,36 +2,21 @@ import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
 import prisma from "@/lib/db";
 import type { SessionUser } from "@/types/shop";
+import { getSecret } from "./secret";
 
 export interface SessionData {
   userId?: string;
   role?: "CUSTOMER" | "ADMIN";
 }
 
-const password =
-  process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32
-    ? process.env.SESSION_SECRET
-    : "dev-only-session-secret-change-me-32chars!!";
+const options = (cookieName: string, maxAge: number): SessionOptions => ({
+  password: getSecret(),
+  cookieName,
+  cookieOptions: { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge },
+});
 
-if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
-  console.warn("⚠️ Warning: SESSION_SECRET is not set in production. Using fallback secret.");
-}
-
-const base = {
-  password,
-  cookieOptions: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    path: "/",
-  },
-};
-
-export const customerSessionOptions: SessionOptions = { ...base, cookieName: "jbr_session", cookieOptions: { ...base.cookieOptions, maxAge: 60 * 60 * 24 * 14 } };
-export const adminSessionOptions: SessionOptions = { ...base, cookieName: "jbr_admin", cookieOptions: { ...base.cookieOptions, maxAge: 60 * 60 * 12 } };
-
-export const customerSession = async () => getIronSession<SessionData>(await cookies(), customerSessionOptions);
-export const adminSession = async () => getIronSession<SessionData>(await cookies(), adminSessionOptions);
+export const customerSession = async () => getIronSession<SessionData>(await cookies(), options("jbr_session", 60 * 60 * 24 * 14));
+export const adminSession = async () => getIronSession<SessionData>(await cookies(), options("jbr_admin", 60 * 60 * 12));
 
 /** The signed-in customer, or null. The account must still exist. */
 export async function getCustomer(): Promise<SessionUser | null> {
@@ -46,7 +31,7 @@ export async function getCustomer(): Promise<SessionUser | null> {
   }
 }
 
-/** The signed-in admin, or null. Role is re-checked in the database on every call. */
+/** The signed-in admin, or null. The role is re-checked in the database on every call; if the database can't be reached, access is denied. */
 export async function getAdmin() {
   const s = await adminSession();
   if (!s.userId) return null;
@@ -55,9 +40,6 @@ export async function getAdmin() {
     if (!u || u.role !== "ADMIN") return null;
     return u;
   } catch {
-    if (s.role === "ADMIN") {
-      return { id: s.userId, name: "Richa", email: "admin@jewelsbyricha.in", role: "ADMIN" as const };
-    }
     return null;
   }
 }

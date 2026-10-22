@@ -7,7 +7,7 @@ import { api } from "@/lib/client/api";
 
 export default function AdminLogin() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@jewelsbyricha.in");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

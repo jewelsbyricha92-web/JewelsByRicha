@@ -12,44 +12,18 @@ export const POST = handle(async (req: Request) => {
   await rateLimit(`admin-login:ip:${clientIp(req)}`, 15, 15 * 60);
   await rateLimit(`admin-login:email:${email}`, 6, 15 * 60);
 
-  let user: { id: string; name: string; email: string; role: "ADMIN" | "CUSTOMER"; passwordHash?: string } | null = null;
-  let valid = false;
-
+  let user;
   try {
-    const dbUser = await prisma.user.findUnique({ where: { email } });
-    if (dbUser) {
-      user = dbUser;
-      valid = await bcrypt.compare(password, dbUser.passwordHash ?? DUMMY_HASH);
-    }
+    user = await prisma.user.findUnique({ where: { email } });
   } catch (err) {
-    console.warn("Database offline or unavailable during admin login", err);
+    console.error("Database unavailable during admin login", err);
+    throw new ApiError(503, "The service is temporarily unavailable. Please try again shortly.");
   }
-
-  // Fallback if database is offline or not yet seeded
-  if (!user || !valid) {
-    const adminEmail = (process.env.ADMIN_SEED_EMAIL || "admin@jewelsbyricha.in").toLowerCase();
-    const adminPass = process.env.ADMIN_SEED_PASSWORD;
-    if (email.toLowerCase() === adminEmail) {
-      if (
-        (adminPass && password === adminPass) ||
-        password === "admin" ||
-        password === "admin123" ||
-        password === "Richa@2026"
-      ) {
-        user = { id: "admin-default", name: "Richa", email: adminEmail, role: "ADMIN" };
-        valid = true;
-      }
-    }
-  }
-
+  // always run bcrypt so response time doesn't reveal whether the email exists
+  const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !valid || user.role !== "ADMIN") throw new ApiError(401, "Incorrect email or password.");
 
-  try {
-    if (user.id !== "admin-default") {
-      await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    }
-  } catch {}
-
+  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {});
   const s = await adminSession();
   s.userId = user.id;
   s.role = "ADMIN";

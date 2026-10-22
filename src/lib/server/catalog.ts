@@ -37,13 +37,12 @@ export async function getCatalogData(): Promise<CatalogData> {
   }
 }
 
-/** Find an active product by its URL slug (with offline seed fallback). */
+/** Find an active product by its URL slug. The bundled seed list is used ONLY if the database can't be reached (never for products that were deleted or unpublished). */
 export async function findProductBySlug(slug: string): Promise<Product | null> {
   try {
     const p = await prisma.product.findFirst({ where: { slug, status: "ACTIVE" }, include: { images: true } });
-    if (p) return toProduct(p);
+    return p ? toProduct(p) : null;
   } catch {
-    // fallback if DB not available
+    return PRODUCTS.find((p) => p.slug === slug && p.status === "ACTIVE") ?? null;
   }
-  return PRODUCTS.find((p) => p.slug === slug && p.status === "ACTIVE") ?? null;
 }
