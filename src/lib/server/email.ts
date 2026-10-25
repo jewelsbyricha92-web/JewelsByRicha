@@ -4,7 +4,7 @@ import type { Order } from "@/types/shop";
 const host = process.env.SMTP_HOST;
 const port = Number(process.env.SMTP_PORT || 587);
 const configured = !!(host && process.env.SMTP_USER && process.env.SMTP_PASS);
-const FROM = process.env.EMAIL_FROM || "Jewels by Richa <hello@jewelsbyricha.in>";
+const FROM = process.env.EMAIL_FROM || "Jewels by Richa <jewelsbyricha92@gmail.com>";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3010";
 
 const transporter = configured
@@ -63,7 +63,7 @@ export const sendOrderConfirmation = (o: Order) =>
     `Order ${o.id} confirmed — Jewels by Richa`,
     layout(
       `Thank you, ${o.customerName.split(" ")[0]}!`,
-      `<p>We've received your order <b>${esc(o.id)}</b>${o.paymentMethod === "COD" ? " (Cash on Delivery)" : ""}.</p>${orderTable(o)}<p><b>Delivering to:</b><br/>${esc(o.address)}</p><p>We'll email you again when it ships.</p>`,
+      `<p>We've received your order <b>${esc(o.id)}</b>.</p>${orderTable(o)}<p><b>Delivering to:</b><br/>${esc(o.address)}</p><p>We'll email you again when it ships.</p>`,
     ),
   );
 
@@ -78,7 +78,7 @@ export const sendOrderCancelled = (o: Order) =>
   sendMail(
     o.email,
     `Order ${o.id} cancelled`,
-    layout("Your order was cancelled", `<p>Order <b>${esc(o.id)}</b> has been cancelled.${o.paymentStatus === "REFUNDED" ? " Any amount paid will be refunded to your original payment method within 5–7 working days." : ""}</p><p>Questions? Just reply to this email.</p>`),
+    layout("Your order was cancelled", `<p>Order <b>${esc(o.id)}</b> has been cancelled.${o.paymentStatus === "REFUNDED" ? " We'll contact you about the amount you paid." : ""}</p><p>Questions? Just reply to this email.</p>`),
   );
 
 export const sendContactNotification = (to: string, name: string, email: string, message: string) =>

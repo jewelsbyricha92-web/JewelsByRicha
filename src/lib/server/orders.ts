@@ -26,7 +26,7 @@ export const createOrderSchema = z.object({
   lines: z.array(z.object({ productId: z.string().min(1).max(64), quantity: z.number().int().min(1).max(10) })).min(1).max(30),
   email: emailSchema,
   address: addressSchema,
-  paymentMethod: z.enum(["UPI", "CARD", "COD"]),
+  paymentMethod: z.enum(["UPI", "CARD"]),
   couponCode: z.string().trim().max(40).optional().or(z.literal("")),
 });
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
@@ -36,7 +36,6 @@ const include = { items: true } as const;
 /** Prices the cart from the database, takes stock + coupon, and creates the order — all in one transaction. */
 export async function createOrder(input: CreateOrderInput, userId: string | null): Promise<Order> {
   const settings = await getSettings();
-  if (input.paymentMethod === "COD" && !settings.codEnabled) throw new ApiError(400, "Cash on Delivery is not available right now.");
 
   const merged = new Map<string, number>();
   for (const l of input.lines) merged.set(l.productId, (merged.get(l.productId) ?? 0) + l.quantity);
@@ -59,14 +58,14 @@ export async function createOrder(input: CreateOrderInput, userId: string | null
       let couponId: string | null = null;
       let couponCode: string | null = null;
       if (input.couponCode) {
-        const v = await validateCouponCode(tx, input.couponCode, subtotal, input.paymentMethod, { email: input.email, userId });
+        const v = await validateCouponCode(tx, input.couponCode, subtotal, { email: input.email, userId });
         if (!(await consumeCoupon(tx, v.coupon.id))) throw new ApiError(400, "This coupon has been fully redeemed");
         discount = v.discount;
         couponId = v.coupon.id;
         couponCode = v.coupon.code;
       }
 
-      const totals = computeTotals(subtotal, discount, input.paymentMethod, settings);
+      const totals = computeTotals(subtotal, discount, settings);
       const counter = await tx.counter.upsert({ where: { key: "order" }, update: { value: { increment: 1 } }, create: { key: "order", value: 1001 } });
 
       const order = await tx.order.create({
@@ -80,7 +79,6 @@ export async function createOrder(input: CreateOrderInput, userId: string | null
           subtotal: totals.subtotal,
           discount: totals.discount,
           shipping: totals.shipping,
-          codFee: totals.codFee,
           total: totals.total,
           couponCode,
           paymentMethod: input.paymentMethod,
@@ -94,10 +92,8 @@ export async function createOrder(input: CreateOrderInput, userId: string | null
     { timeout: 20000 },
   );
 
-  const order = toOrder(created);
-  // Cash on Delivery has nothing more to wait for; online orders are confirmed when the payment lands.
-  if (order.paymentMethod === "COD") void sendOrderConfirmation(order);
-  return order;
+  // The confirmation email goes out when the payment lands (markOrderPaid).
+  return toOrder(created);
 }
 
 /** Gives stock (and the coupon use) back for an order that is being cancelled. Idempotent. */
@@ -122,7 +118,7 @@ export async function cancelOrder(number: string): Promise<Order> {
     await restoreOrder(tx, o.id);
     return tx.order.update({
       where: { id: o.id },
-      data: { status: "CANCELLED", paymentStatus: o.paymentStatus === "PAID" ? "REFUNDED" : o.paymentMethod === "COD" ? o.paymentStatus : "FAILED" },
+      data: { status: "CANCELLED", paymentStatus: o.paymentStatus === "PAID" ? "REFUNDED" : "FAILED" },
       include,
     });
   });
@@ -140,10 +136,7 @@ export async function adminUpdateOrder(number: string, patch: { status?: OrderSt
   if (current.status === "CANCELLED" && patch.status && patch.status !== "CANCELLED") throw new ApiError(400, "A cancelled order can't be reopened. Ask the customer to place a new order.");
 
   const data: Prisma.OrderUpdateInput = {};
-  if (patch.status) {
-    data.status = patch.status;
-    if (patch.status === "DELIVERED" && current.paymentMethod === "COD") data.paymentStatus = "PAID"; // cash collected
-  }
+  if (patch.status) data.status = patch.status;
   if (patch.trackingNumber !== undefined) data.trackingNumber = patch.trackingNumber?.trim() || null;
 
   const updated = await prisma.order.update({ where: { id: current.id }, data, include });
@@ -176,7 +169,7 @@ export async function markOrderPaid(orderId: string, payment: { providerOrderId?
 /** Cancels online orders that were never paid within an hour, so reserved stock is not locked forever. */
 export async function expireUnpaidOrders() {
   const cutoff = new Date(Date.now() - 60 * 60 * 1000);
-  const stale = await prisma.order.findMany({ where: { paymentMethod: { not: "COD" }, paymentStatus: { in: ["PENDING", "FAILED"] }, status: "PENDING", createdAt: { lt: cutoff } }, select: { number: true } });
+  const stale = await prisma.order.findMany({ where: { paymentStatus: { in: ["PENDING", "FAILED"] }, status: "PENDING", createdAt: { lt: cutoff } }, select: { number: true } });
   for (const s of stale) {
     try {
       await cancelOrder(s.number);

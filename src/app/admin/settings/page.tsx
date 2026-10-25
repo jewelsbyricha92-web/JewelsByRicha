@@ -49,11 +49,8 @@ export default function AdminSettings() {
           <div className="grid grid-cols-2 gap-3">
             <Field label="Free shipping above (₹)" hint="Set 0 to always ship free"><input type="number" min={0} className="a-input" value={s.freeShippingThreshold} onChange={(e) => set("freeShippingThreshold", num(e.target.value))} /></Field>
             <Field label="Shipping fee below that (₹)"><input type="number" min={0} className="a-input" value={s.shippingFee} onChange={(e) => set("shippingFee", num(e.target.value))} /></Field>
-            <Field label="COD handling fee (₹)"><input type="number" min={0} className="a-input" value={s.codFee} onChange={(e) => set("codFee", num(e.target.value))} /></Field>
             <Field label="Low-stock alert at"><input type="number" min={0} className="a-input" value={s.lowStockThreshold} onChange={(e) => set("lowStockThreshold", num(e.target.value))} /></Field>
-          </div>
-          <div className="flex items-center justify-between text-sm">Offer Cash on Delivery<Toggle checked={s.codEnabled} onChange={(v) => set("codEnabled", v)} label="Cash on delivery" /></div>
-        </div>
+          </div>        </div>
 
         <div className="a-card space-y-4 p-5">
           <h2 className="font-serif text-xl font-semibold">Store contact</h2>

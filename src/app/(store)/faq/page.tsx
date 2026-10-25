@@ -9,8 +9,9 @@ const FAQS: [string, string][] = [
   ["Is the jewellery really waterproof and anti-tarnish?", "Yes. Our Anti Tarnish range uses stainless steel with a durable PVD gold coating that withstands water, sweat and daily wear. Festive pieces should be kept away from water."],
   ["Is it safe for sensitive skin?", "Our pieces are nickel-safe and skin-friendly. If you have a known metal allergy, please contact us before ordering."],
   ["How long does delivery take?", "Orders ship in 1–2 business days. Delivery is usually 3–7 business days across India."],
-  ["Do you offer Cash on Delivery?", "Yes, COD is available on most pincodes with a small handling fee. Some coupons are not valid on COD orders."],
-  ["Can I return or exchange an order?", "Unused pieces in original packaging can be returned within 7 days of delivery. See Shipping & Returns for details."],
+  ["What payment methods do you accept?", "All orders are prepaid. You can pay securely online by UPI or by credit / debit card. We do not offer Cash on Delivery."],
+  ["Can I cancel or return an order?", "Once an order is placed it can't be cancelled, and we don't accept returns or give refunds. The only exception is a damaged item — see the next question."],
+  ["What if my jewellery arrives damaged?", "We're sorry! Record an unboxing video that shows the sealed parcel being opened and the damage, and email it to us with your order number within 48 hours of delivery. After we verify it, we'll send a replacement at no extra cost."],
   ["Do you ship internationally?", "Not yet — we currently deliver within India only."],
 ];
 

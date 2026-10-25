@@ -18,7 +18,6 @@ export const POST = handle(async (req: Request) => {
   const order = await prisma.order.findUnique({ where: { number: orderNumber } });
   const me = await getCustomer();
   if (!order || !((me && order.userId === me.id) || validOrderToken(order.number, order.email, token))) throw new ApiError(404, "Order not found");
-  if (order.paymentMethod === "COD") throw new ApiError(400, "This is a Cash on Delivery order.");
   if (order.status === "CANCELLED") throw new ApiError(400, "This order was cancelled. Please place a new order.");
   if (order.paymentStatus === "PAID") throw new ApiError(400, "This order is already paid.");
 

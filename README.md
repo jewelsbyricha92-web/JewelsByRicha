@@ -27,9 +27,9 @@ npm run dev                   # http://localhost:3010
 
 | Area | Highlights |
 |---|---|
-| Storefront | Catalogue rendered from the database, search, wishlist (synced to the account), cart, checkout with coupon, UPI / card / COD, order tracking |
-| Customer accounts | Register with emailed OTP, login, forgot-password, saved addresses, order history, cancel, pay-again |
-| Admin | Dashboard, products (photo upload), categories, orders (status, tracking, cancel), customers, coupons, settings |
+| Storefront | Catalogue rendered from the database, search, wishlist (synced to the account), cart, checkout with coupon, UPI / card (prepaid only), order tracking |
+| Customer accounts | Register with emailed OTP, login, forgot-password, saved addresses, order history, pay-again |
+| Admin | Dashboard, products (photo upload), categories, orders (status, tracking), customers, coupons, settings |
 | Backend | Server-side pricing, atomic stock & coupon handling, Razorpay verify + webhook, rate limiting, signed sessions |
 
 Every feature, security measure and limitation: **[FEATURES.md](FEATURES.md)**. Design notes and roadmap: [BACKEND_PLAN.md](BACKEND_PLAN.md). Client information checklist: [docs/](docs).

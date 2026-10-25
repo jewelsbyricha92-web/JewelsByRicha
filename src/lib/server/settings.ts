@@ -4,10 +4,8 @@ import type { StoreSettings } from "@/types/shop";
 export const DEFAULT_SETTINGS: StoreSettings = {
   freeShippingThreshold: 999,
   shippingFee: 79,
-  codFee: 49,
-  codEnabled: true,
-  contactEmail: "hello@jewelsbyricha.in",
-  contactPhone: "+91 90000 00000",
+  contactEmail: "jewelsbyricha92@gmail.com",
+  contactPhone: "+91 97110 57258",
   businessHours: "Monday to Saturday, 10:00 a.m. to 6:00 p.m.",
   instagram: "jewels_by_richa",
   lowStockThreshold: 5,

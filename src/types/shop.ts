@@ -96,8 +96,7 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   discount: number;
-  shipping: number; // shipping + COD fee, as shown to the customer
-  codFee: number;
+  shipping: number;
   total: number;
   couponCode?: string;
   paymentMethod: PaymentMethod;
@@ -133,15 +132,12 @@ export interface Coupon {
   firstOrderOnly: boolean;
   expiresAt: string; // yyyy-mm-dd
   active: boolean;
-  codAllowed: boolean;
 }
 
 /** Editable store settings (Admin -> Settings). */
 export interface StoreSettings {
   freeShippingThreshold: number;
   shippingFee: number;
-  codFee: number;
-  codEnabled: boolean;
   contactEmail: string;
   contactPhone: string;
   businessHours: string;

@@ -36,7 +36,7 @@ export function ProductClient({ product }: { product: Product }) {
     ["Description", product.description],
     ["Material & finish", product.material],
     ["Care instructions", product.careInstructions],
-    ["Shipping & returns", `Ships within 1–2 business days across India. Easy 7-day returns on unused pieces in original packaging. Free shipping on orders above ₹${settings.freeShippingThreshold.toLocaleString("en-IN")}.`],
+    ["Shipping & replacement", `Ships within 1–2 business days across India. Free shipping on orders above ₹${settings.freeShippingThreshold.toLocaleString("en-IN")}. All orders are prepaid and are not eligible for cancellation or return; a damaged piece is replaced free of charge (an unboxing video is required).`],
   ];
 
   const onScroll = () => {
@@ -145,8 +145,8 @@ export function ProductClient({ product }: { product: Product }) {
             {[
               [ShieldCheck, "Anti-tarnish"],
               [Droplets, "Waterproof"],
-              [Truck, "Free delivery"],
-              [RefreshCcw, "7-day returns"],
+              [Truck, "Pan-India delivery"],
+              [RefreshCcw, "Damage replacement"],
             ].map(([Icon, label]) => {
               const I = Icon as typeof ShieldCheck;
               return (

@@ -54,15 +54,12 @@ export const couponSchema = z
     firstOrderOnly: z.boolean().default(false),
     expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date"),
     active: z.boolean().default(true),
-    codAllowed: z.boolean().default(true),
   })
   .refine((c) => c.type !== "PERCENT" || c.value <= 100, { message: "Percent must be 100 or less", path: ["value"] });
 
 export const settingsSchema = z.object({
   freeShippingThreshold: z.number().int().min(0).max(1_000_000),
   shippingFee: z.number().int().min(0).max(10_000),
-  codFee: z.number().int().min(0).max(10_000),
-  codEnabled: z.boolean(),
   contactEmail: z.string().trim().email().max(160),
   contactPhone: z.string().trim().min(5).max(30),
   businessHours: z.string().trim().max(160),

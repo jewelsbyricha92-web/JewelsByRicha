@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { Banknote, ChevronDown, CreditCard, Lock, Smartphone, Tag } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, CreditCard, Lock, Smartphone, Tag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useAuth } from "@/context/AuthContext";
@@ -23,14 +23,10 @@ export default function CheckoutPage() {
   const { showToast } = useToast();
   const router = useRouter();
 
-  const METHODS: { id: PaymentMethod; label: string; hint: string; icon: typeof Smartphone }[] = useMemo(
-    () => [
-      { id: "UPI", label: "UPI", hint: "GPay, PhonePe, Paytm", icon: Smartphone },
-      { id: "CARD", label: "Credit / Debit card", hint: "Visa, Mastercard, RuPay", icon: CreditCard },
-      ...(settings.codEnabled ? [{ id: "COD" as PaymentMethod, label: "Cash on delivery", hint: `₹${settings.codFee} handling fee`, icon: Banknote }] : []),
-    ],
-    [settings.codEnabled, settings.codFee],
-  );
+  const METHODS: { id: PaymentMethod; label: string; hint: string; icon: typeof Smartphone }[] = [
+    { id: "UPI", label: "UPI", hint: "GPay, PhonePe, Paytm", icon: Smartphone },
+    { id: "CARD", label: "Credit / Debit card", hint: "Visa, Mastercard, RuPay", icon: CreditCard },
+  ];
 
   const [form, setForm] = useState({ name: "", email: "", phone: "", line: "", city: "", state: "", pincode: "" });
   const [saved, setSaved] = useState<SavedAddress[]>([]);
@@ -58,11 +54,11 @@ export default function CheckoutPage() {
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const lines = items.map((i) => ({ productId: i.product.id, quantity: i.quantity }));
 
-  // an applied coupon is re-checked whenever the bag or payment method changes (e.g. not valid on COD)
+  // an applied coupon is re-checked whenever the bag changes
   useEffect(() => {
     if (!applied) return;
     let cancelled = false;
-    api<{ code: string; discount: number }>("/api/coupons/validate", { method: "POST", body: { code: applied.code, lines, paymentMethod: method, email: form.email || undefined } })
+    api<{ code: string; discount: number }>("/api/coupons/validate", { method: "POST", body: { code: applied.code, lines, email: form.email || undefined } })
       .then((r) => !cancelled && setApplied({ code: r.code, discount: r.discount }))
       .catch((e: Error) => {
         if (cancelled) return;
@@ -73,14 +69,14 @@ export default function CheckoutPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [method, subtotal]);
+  }, [subtotal]);
 
-  const totals = computeTotals(subtotal, applied?.discount ?? 0, method, settings);
+  const totals = computeTotals(subtotal, applied?.discount ?? 0, settings);
 
   const apply = async () => {
     if (!code.trim()) return;
     try {
-      const r = await api<{ code: string; discount: number }>("/api/coupons/validate", { method: "POST", body: { code, lines, paymentMethod: method, email: form.email || undefined } });
+      const r = await api<{ code: string; discount: number }>("/api/coupons/validate", { method: "POST", body: { code, lines, email: form.email || undefined } });
       setApplied({ code: r.code, discount: r.discount });
       setCouponMsg({ ok: true, text: `${r.code} applied — you save ${formatPrice(r.discount)}` });
     } catch (e) {
@@ -123,9 +119,7 @@ export default function CheckoutPage() {
         },
       });
       const { order, token } = res;
-      if (method === "COD") return finish(order, token);
 
-      // online payment
       const pay = await api<{ mode: "mock" | "razorpay"; keyId?: string; razorpayOrderId?: string; amount: number; name?: string; email?: string; phone?: string }>("/api/payments/create-order", {
         method: "POST",
         body: { orderNumber: order.id, token },
@@ -172,7 +166,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const payLabel = busy ? "Processing…" : method === "COD" ? "Place order" : `Pay ${formatPrice(totals.total)}`;
+  const payLabel = busy ? "Processing…" : `Pay ${formatPrice(totals.total)}`;
 
   const summary = (
     <>
@@ -202,7 +196,6 @@ export default function CheckoutPage() {
         <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatPrice(totals.subtotal)}</dd></div>
         {totals.discount > 0 && <div className="flex justify-between text-emerald-700"><dt>Discount ({applied?.code})</dt><dd>− {formatPrice(totals.discount)}</dd></div>}
         <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{totals.shipping === 0 ? "Free" : formatPrice(totals.shipping)}</dd></div>
-        {totals.codFee > 0 && <div className="flex justify-between"><dt className="text-muted">COD fee</dt><dd>{formatPrice(totals.codFee)}</dd></div>}
         <div className="flex justify-between border-t border-line pt-3 text-lg font-medium"><dt>Total</dt><dd>{formatPrice(totals.total)}</dd></div>
       </dl>
     </>
@@ -262,6 +255,10 @@ export default function CheckoutPage() {
               ))}
             </div>
             <p className="mt-4 flex items-center gap-2 text-xs text-muted"><Lock className="h-3.5 w-3.5" /> Payments are processed securely by Razorpay. We never see your card details.</p>
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              All orders are prepaid. Orders can&apos;t be cancelled or returned once placed; a damaged item is replaced free — see our{" "}
+              <Link href="/shipping-returns" target="_blank" className="underline">Shipping &amp; returns</Link> and <Link href="/terms" target="_blank" className="underline">Terms</Link>.
+            </p>
           </section>
         </div>
 

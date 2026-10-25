@@ -40,7 +40,7 @@ const EMPTY: Bootstrap = {
   collections: [],
   categories: [],
   coupons: [],
-  settings: { freeShippingThreshold: 999, shippingFee: 79, codFee: 49, codEnabled: true, contactEmail: "", contactPhone: "", businessHours: "", instagram: "", lowStockThreshold: 5 },
+  settings: { freeShippingThreshold: 999, shippingFee: 79, contactEmail: "", contactPhone: "", businessHours: "", instagram: "", lowStockThreshold: 5 },
   unreadMessages: 0,
   pendingOrders: 0,
   categoryCounts: {},
@@ -139,7 +139,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           firstOrderOnly: c.firstOrderOnly,
           expiresAt: c.expiresAt,
           active: c.active,
-          codAllowed: c.codAllowed,
         };
         const r = await api<{ coupon: Coupon }>(exists ? `/api/admin/coupons/${c.id}` : "/api/admin/coupons", { method: exists ? "PUT" : "POST", body: payload });
         setData((d) => ({ ...d, coupons: swap(d.coupons, r.coupon) }));

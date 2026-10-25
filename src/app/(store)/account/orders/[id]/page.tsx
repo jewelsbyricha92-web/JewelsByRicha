@@ -33,22 +33,7 @@ export default function OrderDetail({ params }: { params: Promise<{ id: string }
       </p>
     );
   const idx = STEPS.indexOf(o.status as (typeof STEPS)[number]);
-  const canCancel = o.status === "PENDING" || (o.status === "CONFIRMED" && o.paymentMethod === "COD");
-  const needsPayment = o.paymentMethod !== "COD" && o.paymentStatus !== "PAID" && o.status !== "CANCELLED";
-
-  const cancel = async () => {
-    if (!confirm("Cancel this order?")) return;
-    setBusy(true);
-    try {
-      await api(`/api/account/orders/${encodeURIComponent(o.id)}/cancel`, { method: "POST" });
-      showToast("Order cancelled");
-      load();
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : "Could not cancel the order");
-    } finally {
-      setBusy(false);
-    }
-  };
+  const needsPayment = o.paymentStatus !== "PAID" && o.status !== "CANCELLED";
 
   const payNow = async () => {
     setBusy(true);
@@ -109,7 +94,9 @@ export default function OrderDetail({ params }: { params: Promise<{ id: string }
         <div><div className="label">Delivery address</div>{o.customerName}<br />{o.address}</div>
         <div><div className="label">Payment</div>{o.paymentMethod} · <StatusBadge status={o.paymentStatus} /></div>
       </div>
-      {canCancel && <button disabled={busy} onClick={cancel} className="btn-outline mt-8">Cancel order</button>}
+      <p className="mt-8 text-xs text-muted">
+        Received a damaged piece? Email us an unboxing video within 48 hours of delivery — see <Link href="/shipping-returns" className="underline">Shipping &amp; returns</Link>.
+      </p>
     </div>
   );
 }

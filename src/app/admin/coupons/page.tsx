@@ -8,7 +8,7 @@ import { EmptyRow, Field, Modal, PageHeader, Toggle } from "@/components/admin/u
 import type { Coupon } from "@/types/shop";
 import { formatPrice } from "@/lib/utils";
 
-const BLANK: Coupon = { id: "new", code: "", description: "", type: "PERCENT", value: 10, minOrder: 0, usedCount: 0, firstOrderOnly: false, expiresAt: "", active: true, codAllowed: true };
+const BLANK: Coupon = { id: "new", code: "", description: "", type: "PERCENT", value: 10, minOrder: 0, usedCount: 0, firstOrderOnly: false, expiresAt: "", active: true };
 
 const defaultExpiry = () => {
   const d = new Date();
@@ -88,7 +88,7 @@ export default function AdminCoupons() {
                 <td className="a-td"><span className="rounded border border-dashed border-gold bg-cream px-2 py-0.5 font-mono text-xs font-semibold tracking-wider text-gold-deep">{c.code}</span><div className="mt-1 text-xs text-muted">{c.description}</div></td>
                 <td className="a-td">{c.type === "PERCENT" ? `${c.value}%` : formatPrice(c.value)}{c.maxDiscount && <div className="text-xs text-muted">up to {formatPrice(c.maxDiscount)}</div>}</td>
                 <td className="a-td">{c.minOrder ? formatPrice(c.minOrder) : "—"}</td>
-                <td className="a-td text-xs text-muted">{[c.firstOrderOnly && "First order only", c.perCustomerLimit && `${c.perCustomerLimit}× per customer`, !c.codAllowed && "No COD"].filter(Boolean).join(" · ") || "—"}</td>
+                <td className="a-td text-xs text-muted">{[c.firstOrderOnly && "First order only", c.perCustomerLimit && `${c.perCustomerLimit}× per customer`].filter(Boolean).join(" · ") || "—"}</td>
                 <td className="a-td">{c.usedCount}{c.usageLimit ? ` / ${c.usageLimit}` : ""}</td>
                 <td className={`a-td ${expired(c) ? "text-red-700" : "text-muted"}`}>{c.expiresAt}{expired(c) && <div className="text-xs">expired</div>}</td>
                 <td className="a-td"><Toggle checked={c.active} onChange={(v) => saveCoupon({ ...c, active: v }).catch(fail)} label={`Toggle ${c.code}`} /></td>
@@ -123,9 +123,7 @@ export default function AdminCoupons() {
             <Field label="Uses per customer" hint="Leave blank for unlimited"><input type="number" min={0} className="a-input" value={editing.c.perCustomerLimit ?? ""} onChange={(e) => set({ perCustomerLimit: num(e.target.value) })} /></Field>
             <div className="flex flex-col gap-3 text-sm sm:col-span-2 sm:flex-row sm:gap-8">
               <div className="flex items-center justify-between gap-4">Active<Toggle checked={editing.c.active} onChange={(v) => set({ active: v })} label="Active" /></div>
-              <div className="flex items-center justify-between gap-4">First order only<Toggle checked={editing.c.firstOrderOnly} onChange={(v) => set({ firstOrderOnly: v })} label="First order only" /></div>
-              <div className="flex items-center justify-between gap-4">Valid on COD<Toggle checked={editing.c.codAllowed} onChange={(v) => set({ codAllowed: v })} label="COD allowed" /></div>
-            </div>
+              <div className="flex items-center justify-between gap-4">First order only<Toggle checked={editing.c.firstOrderOnly} onChange={(v) => set({ firstOrderOnly: v })} label="First order only" /></div>            </div>
             <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" className="a-btn-ghost" onClick={() => setEditing(null)}>Cancel</button><button disabled={saving} className="a-btn-dark">{saving ? "Saving…" : "Save coupon"}</button></div>
           </form>
         )}

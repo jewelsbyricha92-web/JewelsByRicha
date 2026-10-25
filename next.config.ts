@@ -6,12 +6,12 @@ const isProd = process.env.NODE_ENV === "production";
 // 'unsafe-inline' for scripts is required by Next.js's inline bootstrap scripts unless nonces are set up.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
+  "script-src 'self' 'unsafe-inline' https://*.razorpay.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://res.cloudinary.com https://*.razorpay.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com",
-  "frame-src https://api.razorpay.com https://checkout.razorpay.com",
+  "connect-src 'self' https://*.razorpay.com",
+  "frame-src https://*.razorpay.com",
   "form-action 'self'",
   "base-uri 'self'",
   "object-src 'none'",

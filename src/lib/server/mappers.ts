@@ -54,7 +54,6 @@ export const toCoupon = (c: DbCoupon): Coupon => ({
   firstOrderOnly: c.firstOrderOnly,
   expiresAt: c.expiresAt.toISOString().slice(0, 10),
   active: c.active,
-  codAllowed: c.codAllowed,
 });
 
 export function toOrder(o: DbOrder & { items: DbOrderItem[] }): Order {
@@ -68,8 +67,7 @@ export function toOrder(o: DbOrder & { items: DbOrderItem[] }): Order {
     items: o.items.map((i) => ({ productId: i.productId ?? "", name: i.name, image: i.image ?? undefined, price: i.price, quantity: i.quantity })),
     subtotal: o.subtotal,
     discount: o.discount,
-    shipping: o.shipping + o.codFee,
-    codFee: o.codFee,
+    shipping: o.shipping + o.codFee, // codFee is 0 on every new order (COD was dropped); kept so old orders still add up
     total: o.total,
     couponCode: o.couponCode ?? undefined,
     paymentMethod: o.paymentMethod,

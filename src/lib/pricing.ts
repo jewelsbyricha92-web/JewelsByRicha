@@ -1,4 +1,4 @@
-import type { PaymentMethod, StoreSettings } from "@/types/shop";
+import type { StoreSettings } from "@/types/shop";
 
 /** Discount in rupees for a coupon on a subtotal (pure; usable on client and server). */
 export function couponAmount(c: { type: "PERCENT" | "FLAT"; value: number; maxDiscount?: number | null }, subtotal: number) {
@@ -7,14 +7,8 @@ export function couponAmount(c: { type: "PERCENT" | "FLAT"; value: number; maxDi
   return Math.max(0, Math.min(d, subtotal));
 }
 
-export function computeTotals(
-  subtotal: number,
-  discount: number,
-  method: PaymentMethod,
-  s: Pick<StoreSettings, "freeShippingThreshold" | "shippingFee" | "codFee">,
-) {
+export function computeTotals(subtotal: number, discount: number, s: Pick<StoreSettings, "freeShippingThreshold" | "shippingFee">) {
   const after = subtotal - discount;
   const shipping = subtotal === 0 || after >= s.freeShippingThreshold ? 0 : s.shippingFee;
-  const codFee = method === "COD" ? s.codFee : 0;
-  return { subtotal, discount, shipping, codFee, total: after + shipping + codFee };
+  return { subtotal, discount, shipping, total: after + shipping };
 }

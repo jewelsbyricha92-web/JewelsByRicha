@@ -8,7 +8,7 @@ export function PromoBanner() {
   const messages = [
     `Free shipping on orders above ₹${settings.freeShippingThreshold.toLocaleString("en-IN")}`,
     "Anti-tarnish · Waterproof · Premium quality",
-    "Gift-ready packaging · Easy returns",
+    "Gift-ready packaging · Free replacement on damaged items",
   ];
   const [i, setI] = useState(0);
   useEffect(() => {

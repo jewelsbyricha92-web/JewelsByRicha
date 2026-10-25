@@ -5,8 +5,8 @@ export const BRAND = {
   positioning:
     "Premium anti-tarnish, waterproof jewellery — from festive heirloom-inspired pieces to everyday essentials.",
   contact: {
-    email: "hello@jewelsbyricha.in",
-    phone: "+91 90000 00000",
+    email: "jewelsbyricha92@gmail.com",
+    phone: "+91 97110 57258",
     address: "India",
   },
   social: {
@@ -19,5 +19,4 @@ export const BRAND = {
   businessHours: "Monday to Saturday, 10:00 a.m. to 6:00 p.m.",
   freeShippingThreshold: 999,
   shippingFee: 79,
-  codFee: 49,
 };

@@ -22,16 +22,16 @@ Everything this project does today. Items marked **(needs keys)** are fully buil
 ### Bag, wishlist & checkout
 - **Slide-out bag** and full **bag page** with free-shipping progress bar, quantity edits, remove, "Complete the look" suggestions, step indicator, sticky checkout button on phones.
 - **Wishlist:** works for guests (in the browser) and is **saved to the account** after sign-in (guest items are merged in).
-- **Checkout:** contact + delivery form (pre-filled from the account and default address), saved-address picker, **live coupon check** (re-validated when the bag or payment method changes), UPI / card / Cash on Delivery, collapsible order summary and sticky pay button on phones, clear error messages.
+- **Checkout:** contact + delivery form (pre-filled from the account and default address), saved-address picker, **live coupon check** (re-validated when the bag or payment method changes), UPI / card (prepaid only — no Cash on Delivery), collapsible order summary and sticky pay button on phones, clear error messages.
 - **Order confirmation page**, guest orders supported.
 
 ### Customer accounts
 - **Register with an emailed 6-digit OTP**, sign in, **forgot / reset password** (OTP), sign out.
-- **Account area:** overview (orders, wishlist, total spent), **order history with "show older orders" pagination**, order detail with a progress tracker and tracking number, **cancel an order** (while allowed), **pay again** for an unpaid online order, saved addresses (add / delete / default), profile edit.
+- **Account area:** overview (orders, wishlist, total spent), **order history with "show older orders" pagination**, order detail with a progress tracker and tracking number, **pay again** for an unpaid online order, saved addresses (add / delete / default), profile edit.
 - Guest orders placed earlier with the same email are **attached automatically** when the customer signs up or signs in.
 
 ### Content pages
-About, Care guide, FAQ, Contact (messages are saved and appear in admin), Shipping & returns (uses the live fee settings), Privacy policy, Terms. Policy wording is placeholder until the client supplies it.
+About, Care guide, FAQ, Contact (messages are saved and appear in admin), Shipping & returns (live fee settings; prepaid only, no cancellation/returns/refunds, free replacement for damaged items with an unboxing video), Privacy policy, Terms & conditions (no GST wording — the business is not GST-registered).
 
 ### SEO
 Server-rendered catalogue pages, per-page titles and descriptions, Open Graph tags, **product structured data (JSON-LD)**, `sitemap.xml` and `robots.txt` generated from the database, real **404 status** for unknown products, collections and categories.
@@ -49,9 +49,9 @@ Responsive (sidebar collapses to a menu on tablets and phones; lists turn into c
 | **Categories** | Grouped by collection; add / edit / delete (blocked while it still has products), show / hide, **choose which (max 8) appear on the homepage**, sort order, URL slug. |
 | **Orders** | **Paginated** with status tabs and live counts and search (order no., name, email, phone). Order detail: items, totals, customer and address, change status (Pending → Confirmed → Shipped → Delivered / Cancelled), add **tracking number**, **cancel** (restocks and releases the coupon), and a warning when a paid order needs a refund. Customers are emailed on ship / cancel. |
 | **Customers** | **Paginated** list with search, order count and total spent; customer detail with order history. |
-| **Coupons** | Create / edit / delete / enable. Percent or flat, minimum order, maximum discount, expiry date, total usage limit, **per-customer limit**, **first-order-only**, valid-on-COD switch, live usage count. |
+| **Coupons** | Create / edit / delete / enable. Percent or flat, minimum order, maximum discount, expiry date, total usage limit, **per-customer limit**, **first-order-only**, live usage count. |
 | **Messages** | Contact-form inbox (paginated, unread filter, mark handled, delete) and newsletter subscriber count. |
-| **Settings** | Free-shipping threshold, shipping fee, COD fee and on/off, low-stock alert level, store email / phone / hours / Instagram, **change admin password**, and a status panel showing which integrations (Razorpay, Cloudinary, email) are connected. |
+| **Settings** | Free-shipping threshold, shipping fee, low-stock alert level, store email / phone / hours / Instagram, **change admin password**, and a status panel showing which integrations (Razorpay, Cloudinary, email) are connected. |
 
 Sidebar badges show pending orders and unread messages.
 
@@ -70,7 +70,7 @@ Sidebar badges show pending orders and unread messages.
 - **Editable settings** stored in the database, applied across the storefront (bag, checkout, policy page, footer, announcement bar).
 
 ### API summary
-`/api/auth/*` (register, verify-otp, login, logout, me, profile, forgot, reset) · `/api/account/*` (addresses, orders, cancel) · `/api/wishlist` · `/api/orders` · `/api/coupons/validate` · `/api/payments/*` (create-order, verify, webhook) · `/api/contact` · `/api/newsletter` · `/api/health` · `/api/cron/expire-orders` · `/api/admin/*` (login, logout, me, bootstrap, stats, products, categories, coupons, orders, customers, messages, settings, password, upload).
+`/api/auth/*` (register, verify-otp, login, logout, me, profile, forgot, reset) · `/api/account/*` (addresses, orders) · `/api/wishlist` · `/api/orders` · `/api/coupons/validate` · `/api/payments/*` (create-order, verify, webhook) · `/api/contact` · `/api/newsletter` · `/api/health` · `/api/cron/expire-orders` · `/api/admin/*` (login, logout, me, bootstrap, stats, products, categories, coupons, orders, customers, messages, settings, password, upload).
 
 ---
 
@@ -101,7 +101,7 @@ Sidebar badges show pending orders and unread messages.
 ## 6. Developer tooling
 
 - `npm run dev` / `build` / `start` · `npm run db:migrate` / `db:seed` / `db:studio` · `npm run typecheck`
-- **`npm run test:smoke`** — 50+ automated end-to-end checks against a running server (health, access control, CSRF, admin login, pagination, coupons, ordering, stock, cancel/restock, uploads, registration + OTP, password reset, rate limiting).
+- **`npm run test:smoke`** — 50+ automated end-to-end checks against a running server (health, access control, CSRF, admin login, pagination, coupons, ordering, stock, admin cancel/restock, uploads, registration + OTP, password reset, rate limiting).
 - `.env.example` documents every setting; `README.md` has the setup steps; `BACKEND_PLAN.md` holds the design notes; `docs/` holds the client information checklist (PDF).
 
 ---
