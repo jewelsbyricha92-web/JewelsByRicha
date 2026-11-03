@@ -275,13 +275,29 @@ export default function CheckoutPage() {
         <div className="space-y-6">
           <section className="border border-line bg-white p-5 md:p-8">
             <h2 className="mb-5 flex items-center gap-3 font-serif text-2xl"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink font-sans text-xs text-ivory">1</span> Contact &amp; delivery</h2>
-            {saved.length > 1 && (
-              <div className="mb-5 flex flex-wrap gap-2">
-                {saved.map((a) => (
-                  <button key={a.id} type="button" onClick={() => setForm((f) => ({ ...f, name: a.name, phone: a.phone, line: a.line, city: a.city, state: a.state, pincode: a.pincode }))} className="border border-line px-3 py-1.5 text-xs hover:border-gold">
-                    {a.name} · {a.city}
+            {saved.length > 0 && (
+              <div className="mb-5">
+                <p className="label">Your saved addresses</p>
+                <div className="flex flex-wrap gap-2">
+                  {saved.map((a) => {
+                    const active = a.line === form.line && a.pincode === form.pincode && a.name === form.name;
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, name: a.name, phone: a.phone, line: a.line, city: a.city, state: a.state, pincode: a.pincode }))}
+                        className={cn("max-w-full border px-3 py-2 text-left text-xs transition-colors", active ? "border-gold bg-cream" : "border-line hover:border-gold")}
+                      >
+                        <span className="block font-medium">{a.name}{a.isDefault && <span className="ml-1.5 text-[10px] uppercase tracking-wider text-gold-deep">Default</span>}</span>
+                        <span className="block truncate text-muted">{a.line}, {a.city} – {a.pincode}</span>
+                      </button>
+                    );
+                  })}
+                  <button type="button" onClick={() => setForm((f) => ({ ...f, line: "", city: "", state: "", pincode: "" }))} className="border border-dashed border-line px-3 py-2 text-xs text-muted hover:border-gold hover:text-ink">
+                    + New address
                   </button>
-                ))}
+                </div>
+                <p className="mt-2 text-[11px] text-muted">New addresses are saved to your account automatically when you place an order.</p>
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">

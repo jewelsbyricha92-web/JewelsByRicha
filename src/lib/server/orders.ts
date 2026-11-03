@@ -35,6 +35,28 @@ export type CreateOrderInput = Omit<z.infer<typeof createOrderSchema>, "email" |
 
 const include = { items: true } as const;
 
+/** Keeps a delivery address on the customer's account so it is offered again at the next checkout. Never throws. */
+export async function rememberAddress(userId: string, a: z.infer<typeof addressSchema>) {
+  try {
+    const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+    const mine = await prisma.address.findMany({ where: { userId } });
+    if (mine.some((m) => norm(m.line) === norm(a.line) && m.pincode === a.pincode && norm(m.name) === norm(a.name))) return;
+    if (mine.length >= 10) return;
+    await prisma.address.create({ data: { userId, name: a.name, phone: a.phone, line: a.line, city: a.city, state: a.state, pincode: a.pincode, isDefault: mine.length === 0 } });
+  } catch (e) {
+    console.error("[address] could not save", e);
+  }
+}
+
+/** Saves the addresses from a customer's latest orders (newest becomes the default) — for accounts that have none yet. */
+export async function backfillAddresses(userId: string) {
+  const orders = await prisma.order.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3, select: { shippingAddress: true } });
+  for (const o of orders) {
+    const parsed = addressSchema.safeParse(o.shippingAddress);
+    if (parsed.success) await rememberAddress(userId, parsed.data);
+  }
+}
+
 /** Prices the cart from the database, takes stock + coupon, and creates the order — all in one transaction. */
 export async function createOrder(input: CreateOrderInput, userId: string | null): Promise<Order> {
   const settings = await getSettings();
@@ -94,7 +116,8 @@ export async function createOrder(input: CreateOrderInput, userId: string | null
     { timeout: 20000 },
   );
 
-  // The confirmation email goes out when the payment lands (markOrderPaid).
+  // remember the address for next time (signed-in customers); the confirmation email goes out when the payment lands (markOrderPaid)
+  if (userId) await rememberAddress(userId, input.address);
   return toOrder(created);
 }
 

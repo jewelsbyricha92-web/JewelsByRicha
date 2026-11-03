@@ -2,6 +2,7 @@ import { z } from "zod";
 import prisma from "@/lib/db";
 import { ApiError, body, clientIp, emailSchema, handle, ok, rateLimit } from "@/lib/server/api";
 import { checkOtp } from "@/lib/server/otp";
+import { backfillAddresses } from "@/lib/server/orders";
 import { customerSession } from "@/lib/server/session";
 
 const schema = z.object({ email: emailSchema, otp: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code") });
@@ -17,6 +18,7 @@ export const POST = handle(async (req: Request) => {
   const user = await prisma.user.create({ data: { name: res.data.name, email, phone: res.data.phone, passwordHash: res.data.passwordHash, lastLoginAt: new Date() } });
   // attach any guest orders placed earlier with this email
   await prisma.order.updateMany({ where: { email, userId: null }, data: { userId: user.id } });
+  await backfillAddresses(user.id);
 
   const s = await customerSession();
   s.userId = user.id;
