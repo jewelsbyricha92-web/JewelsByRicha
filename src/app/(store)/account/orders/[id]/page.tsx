@@ -8,7 +8,7 @@ import { api } from "@/lib/client/api";
 import { payForOrder } from "@/lib/client/pay";
 import { useToast } from "@/context/ToastContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn, formatDate, formatPrice } from "@/lib/utils";
+import { cn, formatDate, formatPrice, paymentLabel } from "@/lib/utils";
 
 const STEPS = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"] as const;
 
@@ -92,7 +92,7 @@ export default function OrderDetail({ params }: { params: Promise<{ id: string }
       </div>
       <div className="mt-6 grid gap-6 text-sm sm:grid-cols-2">
         <div><div className="label">Delivery address</div>{o.customerName}<br />{o.address}</div>
-        <div><div className="label">Payment</div>{o.paymentMethod} · <StatusBadge status={o.paymentStatus} /></div>
+        <div><div className="label">Payment</div>{paymentLabel(o.paymentMethod)} · <StatusBadge status={o.paymentStatus} /></div>
       </div>
       <p className="mt-8 text-xs text-muted">
         Received a damaged piece? Email us an unboxing video within 48 hours of delivery — see <Link href="/shipping-returns" className="underline">Shipping &amp; returns</Link>.

@@ -96,26 +96,28 @@ async function main() {
   const email = `smoke+${Date.now()}@example.com`;
   const lines = [{ productId: target.id, quantity: 2 }];
 
-  const preview = await anon.req("/api/coupons/validate", { method: "POST", body: { code: "welcome10", lines, paymentMethod: "UPI", email } });
+  const preview = await anon.req("/api/coupons/validate", { method: "POST", body: { code: "welcome10", lines, email } });
   ok(preview.status === 200 && preview.json.discount > 0, "WELCOME10 previews a discount", JSON.stringify(preview.json));
-  const codRefused = await anon.req("/api/orders", { method: "POST", body: { lines, email, address, paymentMethod: "COD" } });
-  ok(codRefused.status === 400, "Cash on Delivery orders are refused (prepaid only)");
+  ok((await anon.req("/api/orders", { method: "POST", body: { lines, address } })).status === 401, "guests can't place orders (sign-in with a verified email is required)");
+  const buyer = new Client();
+  const bReg = await buyer.req("/api/auth/register", { method: "POST", body: { name: "Smoke Buyer", email, password: "Smoke-pass-1" } });
+  ok((await buyer.req("/api/auth/verify-otp", { method: "POST", body: { email, otp: bReg.json?.devOtp } })).status === 200, "buyer account created and signed in after OTP");
 
-  const placed = await anon.req("/api/orders", { method: "POST", body: { lines, email, address, paymentMethod: "UPI", couponCode: "WELCOME10" } });
-  ok(placed.status === 201 && /^JBR-\d+$/.test(placed.json?.order?.id ?? ""), "guest prepaid order is created", placed.text.slice(0, 200));
+  const placed = await buyer.req("/api/orders", { method: "POST", body: { lines, address, couponCode: "WELCOME10" } });
+  ok(placed.status === 201 && /^JBR-\d+$/.test(placed.json?.order?.id ?? ""), "signed-in prepaid order is created", placed.text.slice(0, 200));
   const order = placed.json?.order;
   if (order) {
     ok(order.subtotal === target.price * 2, "server prices the order from the database");
     ok(order.total === order.subtotal - order.discount + order.shipping, "totals add up");
     ok((await stockOf()) === before - 2, "stock is reserved by the order");
     ok((await anon.req(`/api/orders/${order.id}`)).status === 404, "order is private without its token");
-    ok((await anon.req(`/api/orders/${order.id}?token=${placed.json.token}`)).status === 200, "order is visible with its token");
+    ok((await buyer.req(`/api/orders/${order.id}`)).status === 200, "owner can see the order");
 
-    const again = await anon.req("/api/orders", { method: "POST", body: { lines, email, address, paymentMethod: "UPI", couponCode: "WELCOME10" } });
+    const again = await buyer.req("/api/orders", { method: "POST", body: { lines, address, couponCode: "WELCOME10" } });
     ok(again.status === 400, "first-order-only coupon can't be reused", again.text.slice(0, 120));
     if (again.status === 201) await admin.req(`/api/admin/orders/${again.json.order.id}`, { method: "PUT", body: { status: "CANCELLED" } });
 
-    const oversell = await anon.req("/api/orders", { method: "POST", body: { lines: [{ productId: target.id, quantity: 10 }], email, address, paymentMethod: "UPI" } });
+    const oversell = await buyer.req("/api/orders", { method: "POST", body: { lines: [{ productId: target.id, quantity: 10 }], address } });
     ok(oversell.status === 409 || oversell.status === 201, "over-ordering is handled");
     if (oversell.status === 201) await admin.req(`/api/admin/orders/${oversell.json.order.id}`, { method: "PUT", body: { status: "CANCELLED" } });
 
@@ -140,7 +142,7 @@ async function main() {
   ok(addr.status === 201 && addr.json.address.isDefault === true && !("userId" in addr.json.address), "address saved (first becomes default, no internal fields leaked)");
   const wl = await cust.req("/api/wishlist", { method: "POST", body: { productId: target.id } });
   ok(wl.status === 200 && (await cust.req("/api/wishlist")).json.ids.includes(target.id), "wishlist saved on the server");
-  const myOrder = await cust.req("/api/orders", { method: "POST", body: { lines: [{ productId: target.id, quantity: 1 }], email: "ignored@example.com", address, paymentMethod: "UPI" } });
+  const myOrder = await cust.req("/api/orders", { method: "POST", body: { lines: [{ productId: target.id, quantity: 1 }], email: "ignored@example.com", address } });
   ok(myOrder.status === 201 && myOrder.json.order.email === cEmail, "signed-in order uses the account email");
   const pay = await cust.req("/api/payments/create-order", { method: "POST", body: { orderNumber: myOrder.json.order.id } });
   ok(pay.status === 200 && (pay.json.mode === "mock" || pay.json.mode === "razorpay"), "payment can be started");
@@ -157,7 +159,7 @@ async function main() {
   await admin.req(`/api/admin/orders/${myOrder.json.order.id}`, { method: "PUT", body: { status: "CANCELLED" } }); // tidy up: restock
 
   console.log("\nValidation & uploads");
-  ok((await anon.req("/api/orders", { method: "POST", body: { lines: [{ productId: target.id, quantity: -1 }], email, address, paymentMethod: "UPI" } })).status === 400, "negative quantity rejected");
+  ok((await buyer.req("/api/orders", { method: "POST", body: { lines: [{ productId: target.id, quantity: -1 }], address } })).status === 400, "negative quantity rejected");
   const bad = await admin.req("/api/admin/products", { method: "POST", body: { name: "X", categoryId: target.categoryId, price: 100, stock: 1, status: "ACTIVE", images: ["javascript:alert(1)"] } });
   ok(bad.status === 400, "unsafe image URL rejected");
   const fd = new FormData();

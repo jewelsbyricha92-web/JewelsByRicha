@@ -7,7 +7,7 @@ import { useAdminList } from "@/lib/client/admin-list";
 import { EmptyRow, PageHeader } from "@/components/admin/ui";
 import { Pager } from "@/components/admin/Pager";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn, formatDate, formatPrice } from "@/lib/utils";
+import { cn, formatDate, formatPrice, paymentLabel } from "@/lib/utils";
 import type { Order } from "@/types/shop";
 
 const TABS = ["ALL", "PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
@@ -46,7 +46,7 @@ export default function AdminOrders() {
                   <div className="min-w-0">
                     <div className="font-medium">{o.id}</div>
                     <div className="truncate text-sm">{o.customerName}</div>
-                    <div className="text-xs text-muted">{formatDate(o.createdAt)} · {o.paymentMethod}</div>
+                    <div className="text-xs text-muted">{formatDate(o.createdAt)} · {paymentLabel(o.paymentMethod)}</div>
                   </div>
                   <div className="flex flex-col items-end gap-1.5">
                     <span className="font-medium">{formatPrice(o.total)}</span>
@@ -66,7 +66,7 @@ export default function AdminOrders() {
                     <td className="a-td font-medium"><Link href={`/admin/orders/${o.id}`} className="hover:text-gold-deep">{o.id}</Link></td>
                     <td className="a-td text-muted">{formatDate(o.createdAt)}</td>
                     <td className="a-td">{o.customerName}<div className="text-xs text-muted">{o.email}</div></td>
-                    <td className="a-td">{o.paymentMethod} <StatusBadge status={o.paymentStatus} className="ml-1" /></td>
+                    <td className="a-td">{paymentLabel(o.paymentMethod)} <StatusBadge status={o.paymentStatus} className="ml-1" /></td>
                     <td className="a-td"><StatusBadge status={o.status} /></td>
                     <td className="a-td text-right font-medium">{formatPrice(o.total)}</td>
                   </tr>

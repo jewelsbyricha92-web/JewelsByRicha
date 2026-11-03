@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Customer / admin facing name of a stored payment method (older orders may still say UPI, CARD or COD). */
+export function paymentLabel(method: string) {
+  return ({ ONLINE: "Online payment", UPI: "UPI", CARD: "Card", COD: "Cash on delivery" } as Record<string, string>)[method] ?? method;
+}
+
 export function formatPrice(n: number) {
   return "₹" + Math.round(n).toLocaleString("en-IN");
 }

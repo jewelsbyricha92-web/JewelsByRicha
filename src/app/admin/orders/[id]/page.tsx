@@ -9,7 +9,7 @@ import { api } from "@/lib/client/api";
 import { Field, PageHeader } from "@/components/admin/ui";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { Order, OrderStatus } from "@/types/shop";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatDate, formatPrice, paymentLabel } from "@/lib/utils";
 
 const STATUSES: OrderStatus[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
@@ -113,7 +113,7 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
             <h2 className="font-serif text-xl font-semibold">Customer</h2>
             <div><div className="font-medium">{o.customerName}</div><div className="text-muted">{o.email}</div><div className="text-muted">{o.phone}</div></div>
             <div><div className="text-xs font-medium uppercase tracking-wider text-muted">Ship to</div>{o.shippingAddress.name}<br />{o.address}</div>
-            <div><div className="text-xs font-medium uppercase tracking-wider text-muted">Payment</div>{o.paymentMethod} · <StatusBadge status={o.paymentStatus} /></div>
+            <div><div className="text-xs font-medium uppercase tracking-wider text-muted">Payment</div>{paymentLabel(o.paymentMethod)} · <StatusBadge status={o.paymentStatus} /></div>
             {o.customerId !== "guest" ? <Link href={`/admin/customers/${o.customerId}`} className="inline-block text-gold-deep hover:underline">View customer →</Link> : <span className="text-xs text-muted">Guest checkout</span>}
           </div>
         </div>

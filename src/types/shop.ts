@@ -67,7 +67,8 @@ export interface Product {
 }
 
 export type OrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
-export type PaymentMethod = "UPI" | "CARD" | "COD";
+/** New orders are always ONLINE (Razorpay: UPI, cards, netbanking, wallets). UPI / CARD / COD only appear on older orders. */
+export type PaymentMethod = "ONLINE" | "UPI" | "CARD" | "COD";
 export type PaymentStatus = "PAID" | "PENDING" | "FAILED" | "REFUNDED";
 
 export interface OrderItem {

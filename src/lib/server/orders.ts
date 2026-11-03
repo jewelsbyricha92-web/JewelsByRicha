@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db";
 import { computeTotals } from "@/lib/pricing";
 import type { Order, OrderStatus } from "@/types/shop";
-import { ApiError, emailSchema, phoneSchema } from "./api";
+import { ApiError, phoneSchema } from "./api";
 import { consumeCoupon, validateCouponCode } from "./coupons";
 import { sendOrderCancelled, sendOrderConfirmation, sendOrderShipped } from "./email";
 import { toOrder } from "./mappers";
@@ -24,12 +24,11 @@ export const addressInputSchema = addressSchema.extend({ isDefault: z.boolean().
 
 export const createOrderSchema = z.object({
   lines: z.array(z.object({ productId: z.string().min(1).max(64), quantity: z.number().int().min(1).max(10) })).min(1).max(30),
-  email: emailSchema,
   address: addressSchema,
-  paymentMethod: z.enum(["UPI", "CARD"]),
   couponCode: z.string().trim().max(40).optional().or(z.literal("")),
 });
-export type CreateOrderInput = z.infer<typeof createOrderSchema>;
+/** What the browser sends, plus the signed-in customer's (OTP-verified) email added by the route. */
+export type CreateOrderInput = z.infer<typeof createOrderSchema> & { email: string };
 
 const include = { items: true } as const;
 
@@ -81,7 +80,7 @@ export async function createOrder(input: CreateOrderInput, userId: string | null
           shipping: totals.shipping,
           total: totals.total,
           couponCode,
-          paymentMethod: input.paymentMethod,
+          paymentMethod: "ONLINE",
           items: { create: products.map((p) => ({ productId: p.id, name: p.name, image: p.images[0]?.url ?? null, price: p.price, quantity: merged.get(p.id)! })) },
         },
         include,

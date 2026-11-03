@@ -16,7 +16,10 @@ export function Navbar() {
   const [mobile, setMobile] = useState(false);
   const [search, setSearch] = useState(false);
 
+  // The drawer and search overlay are siblings of <header>, not children: the header's backdrop-filter would otherwise
+  // become their containing block and squash "fixed inset-0" into the 60px header bar.
   return (
+    <>
     <header className="sticky top-0 z-40 border-b border-line/70 bg-ivory/95 backdrop-blur-xl backdrop-saturate-150">
       <div className="mx-auto flex h-[60px] max-w-7xl items-center md:h-[82px] justify-between px-5 md:px-10">
         {/* left: clean direct navigation */}
@@ -75,6 +78,7 @@ export function Navbar() {
           </button>
         </div>
       </div>
+    </header>
 
       {/* mobile drawer */}
       {mobile && (
@@ -116,6 +120,6 @@ export function Navbar() {
         </div>
       )}
       {search && <SearchOverlay onClose={() => setSearch(false)} />}
-    </header>
+    </>
   );
 }

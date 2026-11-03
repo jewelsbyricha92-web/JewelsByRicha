@@ -4,7 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronDown, CreditCard, Lock, Smartphone, Tag } from "lucide-react";
+import { ChevronDown, Lock, ShieldCheck, Tag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useAuth } from "@/context/AuthContext";
@@ -14,23 +14,17 @@ import { api, ApiClientError } from "@/lib/client/api";
 import { cn, formatPrice } from "@/lib/utils";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { CheckoutSteps } from "@/components/ui/CheckoutSteps";
-import type { Order, PaymentMethod, SavedAddress } from "@/types/shop";
+import type { Order, SavedAddress } from "@/types/shop";
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart, ready } = useCart();
   const { settings } = useCatalog();
-  const { user } = useAuth();
+  const { user, ready: authReady } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
 
-  const METHODS: { id: PaymentMethod; label: string; hint: string; icon: typeof Smartphone }[] = [
-    { id: "UPI", label: "UPI", hint: "GPay, PhonePe, Paytm", icon: Smartphone },
-    { id: "CARD", label: "Credit / Debit card", hint: "Visa, Mastercard, RuPay", icon: CreditCard },
-  ];
-
   const [form, setForm] = useState({ name: "", email: "", phone: "", line: "", city: "", state: "", pincode: "" });
   const [saved, setSaved] = useState<SavedAddress[]>([]);
-  const [method, setMethod] = useState<PaymentMethod>("UPI");
   const [code, setCode] = useState("");
   const [applied, setApplied] = useState<{ code: string; discount: number } | null>(null);
   const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -85,13 +79,27 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!ready) return <div className="py-32 text-center text-muted">Loading…</div>;
+  if (!ready || !authReady) return <div className="py-32 text-center text-muted">Loading…</div>;
 
   if (items.length === 0)
     return (
       <div className="py-32 text-center">
         <h1 className="font-serif text-4xl">Nothing to checkout</h1>
         <Link href="/shop" className="btn-dark mt-6">Shop jewellery</Link>
+      </div>
+    );
+
+  // Orders need a verified account: sign-up confirms the email with a one-time code, and the bag is kept while signing in.
+  if (!user)
+    return (
+      <div className="mx-auto max-w-lg px-5 py-20 text-center md:py-28">
+        <ShieldCheck className="mx-auto h-12 w-12 text-gold" strokeWidth={1.2} />
+        <h1 className="mt-5 font-serif text-4xl">Sign in to place your order</h1>
+        <p className="mt-3 text-sm text-ink-soft">We verify your email with a one-time code so your order updates and tracking reach you. Your bag is saved — you&apos;ll come straight back here.</p>
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link href="/login?redirect=/checkout" className="btn-dark">Sign in / Create account</Link>
+          <Link href="/cart" className="btn-outline">Back to bag</Link>
+        </div>
       </div>
     );
 
@@ -112,9 +120,7 @@ export default function CheckoutPage() {
         method: "POST",
         body: {
           lines,
-          email: form.email,
           address: { name: form.name, phone: form.phone, line: form.line, city: form.city, state: form.state, pincode: form.pincode },
-          paymentMethod: method,
           couponCode: applied?.code ?? "",
         },
       });
@@ -242,17 +248,12 @@ export default function CheckoutPage() {
 
           <section className="border border-line bg-white p-5 md:p-8">
             <h2 className="mb-5 flex items-center gap-3 font-serif text-2xl"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink font-sans text-xs text-ivory">2</span> Payment</h2>
-            <div className="space-y-3">
-              {METHODS.map((m) => (
-                <label key={m.id} className={cn("flex cursor-pointer items-center gap-4 border p-4 transition-colors", method === m.id ? "border-gold bg-cream" : "border-line hover:border-gold-light")}>
-                  <input type="radio" name="pay" checked={method === m.id} onChange={() => setMethod(m.id)} className="accent-[#b8913a]" />
-                  <m.icon className="h-5 w-5 text-gold" strokeWidth={1.4} />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{m.label}</div>
-                    <div className="text-xs text-muted">{m.hint}</div>
-                  </div>
-                </label>
-              ))}
+            <div className="flex items-center gap-4 border border-gold bg-cream p-4">
+              <ShieldCheck className="h-5 w-5 text-gold" strokeWidth={1.4} />
+              <div className="flex-1">
+                <div className="text-sm font-medium">Pay online</div>
+                <div className="text-xs text-muted">UPI, cards, netbanking &amp; wallets — you&apos;ll choose on the next screen</div>
+              </div>
             </div>
             <p className="mt-4 flex items-center gap-2 text-xs text-muted"><Lock className="h-3.5 w-3.5" /> Payments are processed securely by Razorpay. We never see your card details.</p>
             <p className="mt-3 text-xs leading-relaxed text-muted">

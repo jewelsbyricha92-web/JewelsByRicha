@@ -36,6 +36,7 @@ enum PaymentMethod {
   UPI
   CARD
   COD
+  ONLINE
 }
 
 enum PaymentStatus {
