@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db";
 import { computeTotals } from "@/lib/pricing";
 import type { Order, OrderStatus } from "@/types/shop";
-import { ApiError, phoneSchema } from "./api";
+import { ApiError, emailSchema, phoneSchema } from "./api";
 import { consumeCoupon, validateCouponCode } from "./coupons";
 import { sendOrderCancelled, sendOrderConfirmation, sendOrderShipped } from "./email";
 import { toOrder } from "./mappers";
@@ -26,9 +26,12 @@ export const createOrderSchema = z.object({
   lines: z.array(z.object({ productId: z.string().min(1).max(64), quantity: z.number().int().min(1).max(10) })).min(1).max(30),
   address: addressSchema,
   couponCode: z.string().trim().max(40).optional().or(z.literal("")),
+  // guests: the email plus the proof from the checkout email check; signed-in customers use their account email
+  email: emailSchema.optional(),
+  emailToken: z.string().max(200).optional(),
 });
-/** What the browser sends, plus the signed-in customer's (OTP-verified) email added by the route. */
-export type CreateOrderInput = z.infer<typeof createOrderSchema> & { email: string };
+/** What createOrder needs: the request body with the (already verified) email filled in by the route. */
+export type CreateOrderInput = Omit<z.infer<typeof createOrderSchema>, "email" | "emailToken"> & { email: string };
 
 const include = { items: true } as const;
 

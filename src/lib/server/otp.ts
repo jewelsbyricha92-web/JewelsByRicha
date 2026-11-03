@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { getSecret } from "./secret";
 import prisma from "@/lib/db";
 
-export type OtpPurpose = "register" | "reset";
+export type OtpPurpose = "register" | "reset" | "checkout";
 const TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 

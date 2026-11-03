@@ -98,7 +98,17 @@ async function main() {
 
   const preview = await anon.req("/api/coupons/validate", { method: "POST", body: { code: "welcome10", lines, email } });
   ok(preview.status === 200 && preview.json.discount > 0, "WELCOME10 previews a discount", JSON.stringify(preview.json));
-  ok((await anon.req("/api/orders", { method: "POST", body: { lines, address } })).status === 401, "guests can't place orders (sign-in with a verified email is required)");
+  const gEmail = `smoke.guest+${Date.now()}@example.com`;
+  ok((await anon.req("/api/orders", { method: "POST", body: { lines, address, email: gEmail } })).status === 403, "guest order without a verified email is refused");
+  const gSent = await anon.req("/api/checkout/email/send", { method: "POST", body: { email: gEmail } });
+  ok(gSent.status === 200 && !!gSent.json?.devOtp, "checkout email check sends a code (dev mode returns it)", gSent.text.slice(0, 120));
+  ok((await anon.req("/api/checkout/email/verify", { method: "POST", body: { email: gEmail, otp: "000000" } })).status === 400, "wrong checkout code rejected");
+  const gVer = await anon.req("/api/checkout/email/verify", { method: "POST", body: { email: gEmail, otp: gSent.json?.devOtp } });
+  ok(gVer.status === 200 && !!gVer.json?.token, "correct checkout code returns a proof");
+  ok((await anon.req("/api/orders", { method: "POST", body: { lines, address, email: "someone.else@example.com", emailToken: gVer.json?.token } })).status === 403, "the proof only works for the email that was verified");
+  const gOrder = await anon.req("/api/orders", { method: "POST", body: { lines, address, email: gEmail, emailToken: gVer.json?.token } });
+  ok(gOrder.status === 201 && gOrder.json.order.email === gEmail, "guest with a verified email can place an order", gOrder.text.slice(0, 160));
+  if (gOrder.status === 201) await admin.req(`/api/admin/orders/${gOrder.json.order.id}`, { method: "PUT", body: { status: "CANCELLED" } });
   const buyer = new Client();
   const bReg = await buyer.req("/api/auth/register", { method: "POST", body: { name: "Smoke Buyer", email, password: "Smoke-pass-1" } });
   ok((await buyer.req("/api/auth/verify-otp", { method: "POST", body: { email, otp: bReg.json?.devOtp } })).status === 200, "buyer account created and signed in after OTP");

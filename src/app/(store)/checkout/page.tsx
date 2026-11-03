@@ -4,7 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronDown, Lock, ShieldCheck, Tag } from "lucide-react";
+import { BadgeCheck, ChevronDown, Lock, ShieldCheck, Tag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useAuth } from "@/context/AuthContext";
@@ -32,6 +32,17 @@ export default function CheckoutPage() {
   const [showSummary, setShowSummary] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // guests confirm their email with a one-time code before paying (signed-in customers already have a verified email)
+  const [emailToken, setEmailToken] = useState<string | null>(null);
+  const [verifiedEmail, setVerifiedEmail] = useState('');
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [verifyBusy, setVerifyBusy] = useState(false);
+  const [verifyMsg, setVerifyMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const emailNorm = form.email.trim().toLowerCase();
+  const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailNorm);
+  const emailVerified = !!user || (!!emailToken && verifiedEmail === emailNorm);
+
   // prefill from the signed-in customer and their default address
   useEffect(() => {
     if (!user) return;
@@ -47,6 +58,53 @@ export default function CheckoutPage() {
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const lines = items.map((i) => ({ productId: i.product.id, quantity: i.quantity }));
+
+  const onEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setForm((f) => ({ ...f, email: v }));
+    if (v.trim().toLowerCase() !== verifiedEmail) {
+      setOtpOpen(false);
+      setOtp('');
+      setVerifyMsg(null);
+    }
+  };
+
+  const sendCode = async () => {
+    setVerifyMsg(null);
+    setVerifyBusy(true);
+    try {
+      const r = await api<{ devOtp?: string }>('/api/checkout/email/send', { method: 'POST', body: { email: emailNorm } });
+      setOtp('');
+      setOtpOpen(true);
+      setVerifyMsg({
+        ok: true,
+        text: r.devOtp ? `Local development: your code is ${r.devOtp}` : `We emailed a 6-digit code to ${emailNorm}. It can take a minute — check your spam folder too.`,
+      });
+    } catch (e) {
+      setVerifyMsg({ ok: false, text: e instanceof Error ? e.message : 'Could not send the code. Please try again.' });
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
+
+  const confirmCode = async () => {
+    if (!/^\d{6}$/.test(otp.trim())) return setVerifyMsg({ ok: false, text: 'Enter the 6-digit code from the email.' });
+    setVerifyMsg(null);
+    setVerifyBusy(true);
+    try {
+      const r = await api<{ token: string }>('/api/checkout/email/verify', { method: 'POST', body: { email: emailNorm, otp: otp.trim() } });
+      setEmailToken(r.token);
+      setVerifiedEmail(emailNorm);
+      setOtpOpen(false);
+      setOtp('');
+      setVerifyMsg(null);
+      setError(null);
+    } catch (e) {
+      setVerifyMsg({ ok: false, text: e instanceof Error ? e.message : 'Could not verify the code.' });
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
 
   // an applied coupon is re-checked whenever the bag changes
   useEffect(() => {
@@ -89,20 +147,6 @@ export default function CheckoutPage() {
       </div>
     );
 
-  // Orders need a verified account: sign-up confirms the email with a one-time code, and the bag is kept while signing in.
-  if (!user)
-    return (
-      <div className="mx-auto max-w-lg px-5 py-20 text-center md:py-28">
-        <ShieldCheck className="mx-auto h-12 w-12 text-gold" strokeWidth={1.2} />
-        <h1 className="mt-5 font-serif text-4xl">Sign in to place your order</h1>
-        <p className="mt-3 text-sm text-ink-soft">We verify your email with a one-time code so your order updates and tracking reach you. Your bag is saved — you&apos;ll come straight back here.</p>
-        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/login?redirect=/checkout" className="btn-dark">Sign in / Create account</Link>
-          <Link href="/cart" className="btn-outline">Back to bag</Link>
-        </div>
-      </div>
-    );
-
   const finish = (order: Order, token: string) => {
     try {
       sessionStorage.setItem("jbr_last_order", JSON.stringify({ order, token }));
@@ -114,12 +158,17 @@ export default function CheckoutPage() {
   const place = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!emailVerified) {
+      setError('Please verify your email address first — tap "Verify email" under the email box.');
+      return;
+    }
     setBusy(true);
     try {
       const res = await api<{ order: Order; token: string }>("/api/orders", {
         method: "POST",
         body: {
           lines,
+          ...(user ? {} : { email: emailNorm, emailToken }),
           address: { name: form.name, phone: form.phone, line: form.line, city: form.city, state: form.state, pincode: form.pincode },
           couponCode: applied?.code ?? "",
         },
@@ -238,7 +287,37 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 sm:col-span-1"><Field label="Full name" value={form.name} onChange={set("name")} autoComplete="name" minLength={2} /></div>
               <div className="col-span-2 sm:col-span-1"><Field label="Phone" type="tel" inputMode="tel" value={form.phone} onChange={set("phone")} autoComplete="tel" minLength={7} /></div>
-              <div className="col-span-2"><Field label="Email" type="email" value={form.email} onChange={set("email")} autoComplete="email" readOnly={!!user} /></div>
+              <div className="col-span-2">
+                <Field label="Email" type="email" value={form.email} onChange={onEmailChange} autoComplete="email" readOnly={!!user} />
+                {user ? (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700"><BadgeCheck className="h-4 w-4" /> Verified — your order updates will be sent here.</p>
+                ) : emailVerified ? (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700"><BadgeCheck className="h-4 w-4" /> Email verified</p>
+                ) : (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted">Please verify your email so we can send your order confirmation and tracking updates.</p>
+                    <button type="button" onClick={sendCode} disabled={!emailLooksValid || verifyBusy} className="btn-outline mt-2 !px-5 !py-2.5 disabled:opacity-50">
+                      {verifyBusy && !otpOpen ? 'Sending…' : otpOpen ? 'Resend code' : 'Verify email'}
+                    </button>
+                    {otpOpen && (
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <input
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); confirmCode(); } }}
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          placeholder="Enter 6-digit code"
+                          aria-label="Email verification code"
+                          className="input flex-1 tracking-[0.4em]"
+                        />
+                        <button type="button" onClick={confirmCode} disabled={verifyBusy || otp.length !== 6} className="btn-dark !px-6 disabled:opacity-50">{verifyBusy ? 'Checking…' : 'Verify'}</button>
+                      </div>
+                    )}
+                    {verifyMsg && <p className={cn('mt-2 text-xs', verifyMsg.ok ? 'text-emerald-700' : 'text-red-700')}>{verifyMsg.text}</p>}
+                  </div>
+                )}
+              </div>
               <div className="col-span-2"><Field label="Address" value={form.line} onChange={set("line")} autoComplete="street-address" minLength={5} /></div>
               <Field label="City" value={form.city} onChange={set("city")} />
               <Field label="State" value={form.state} onChange={set("state")} />

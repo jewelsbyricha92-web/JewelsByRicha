@@ -23,7 +23,7 @@ Everything this project does today. Items marked **(needs keys)** are fully buil
 - **Slide-out bag** and full **bag page** with free-shipping progress bar, quantity edits, remove, "Complete the look" suggestions, step indicator, sticky checkout button on phones.
 - **Wishlist:** works for guests (in the browser) and is **saved to the account** after sign-in (guest items are merged in).
 - **Checkout:** contact + delivery form (pre-filled from the account and default address), saved-address picker, **live coupon check** (re-validated when the bag or payment method changes), a single prepaid online-payment option (Razorpay then offers UPI, cards, netbanking, wallets — no Cash on Delivery), collapsible order summary and sticky pay button on phones, clear error messages.
-- **Order confirmation page.** Orders need a signed-in account; sign-up verifies the email with a one-time code and signs the customer in, and the bag is kept through sign-in.
+- **Order confirmation page.** Guests can order without an account, but must first verify their email at checkout ("Verify email" → 6-digit code); the server refuses any order without that proof. Signed-in customers are already verified.
 
 ### Customer accounts
 - **Register with an emailed 6-digit OTP**, sign in, **forgot / reset password** (OTP), sign out.

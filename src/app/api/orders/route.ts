@@ -1,18 +1,28 @@
-import { body, clientIp, handle, ok, rateLimit, requireCustomer } from "@/lib/server/api";
+import { ApiError, body, clientIp, handle, ok, rateLimit } from "@/lib/server/api";
 import { createOrder, createOrderSchema, expireUnpaidOrders } from "@/lib/server/orders";
-import { orderToken } from "@/lib/server/tokens";
+import { getCustomer } from "@/lib/server/session";
+import { orderToken, validEmailProof } from "@/lib/server/tokens";
 
 /**
  * Places an order. Prices, stock, coupon and totals are all computed on the server from the database;
  * the browser only sends product ids and quantities.
- * Only signed-in customers can order: accounts are created through an emailed OTP, so the order email is always a verified one.
+ * The order email must be verified: a signed-in customer's account email already is (sign-up needs an emailed OTP);
+ * a guest has to confirm the address with a one-time code at checkout and send the proof it gets back.
  */
 export const POST = handle(async (req: Request) => {
-  const me = await requireCustomer();
-  const input = await body(req, createOrderSchema);
+  const { email: guestEmail, emailToken, ...input } = await body(req, createOrderSchema);
   await rateLimit(`order:${clientIp(req)}`, 15, 10 * 60);
-  void expireUnpaidOrders().catch(() => {});
 
-  const order = await createOrder({ ...input, email: me.email }, me.id);
+  const me = await getCustomer();
+  let email: string;
+  if (me) {
+    email = me.email;
+  } else {
+    if (!guestEmail || !validEmailProof(guestEmail, emailToken)) throw new ApiError(403, "Please verify your email address to place the order.");
+    email = guestEmail;
+  }
+
+  void expireUnpaidOrders().catch(() => {});
+  const order = await createOrder({ ...input, email }, me?.id ?? null);
   return ok({ order, token: orderToken(order.id, order.email) }, { status: 201 });
 });
