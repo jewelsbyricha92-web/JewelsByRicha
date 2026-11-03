@@ -14,12 +14,12 @@ import { api, ApiClientError } from "@/lib/client/api";
 import { cn, formatPrice } from "@/lib/utils";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { CheckoutSteps } from "@/components/ui/CheckoutSteps";
-import type { Order, SavedAddress } from "@/types/shop";
+import type { Order, SavedAddress, SessionUser } from "@/types/shop";
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart, ready } = useCart();
   const { settings } = useCatalog();
-  const { user, ready: authReady } = useAuth();
+  const { user, ready: authReady, adoptUser } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
 
@@ -92,8 +92,12 @@ export default function CheckoutPage() {
     setVerifyMsg(null);
     setVerifyBusy(true);
     try {
-      const r = await api<{ token: string }>('/api/checkout/email/verify', { method: 'POST', body: { email: emailNorm, otp: otp.trim() } });
+      const r = await api<{ token: string; user: SessionUser | null }>('/api/checkout/email/verify', {
+        method: 'POST',
+        body: { email: emailNorm, otp: otp.trim(), name: form.name.trim() || undefined, phone: form.phone.trim() || undefined },
+      });
       setEmailToken(r.token);
+      if (r.user) adoptUser(r.user); // verifying the email also signs the customer in
       setVerifiedEmail(emailNorm);
       setOtpOpen(false);
       setOtp('');

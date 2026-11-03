@@ -14,6 +14,8 @@ interface AuthContextType {
   startRegistration: (input: { name: string; email: string; phone?: string; password: string }) => Promise<{ devOtp?: string }>;
   /** Step 2: verifies the code, creates the account and signs in. */
   verifyRegistration: (email: string, otp: string) => Promise<SessionUser>;
+  /** Adopts a session the server just created (e.g. after the checkout email check). */
+  adoptUser: (u: SessionUser) => void;
   logout: () => Promise<void>;
   updateProfile: (u: { name: string; phone?: string }) => Promise<void>;
 }
@@ -55,7 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(r.user);
   }, []);
 
-  return <AuthContext.Provider value={{ user, ready, login, startRegistration, verifyRegistration, logout, updateProfile }}>{children}</AuthContext.Provider>;
+  const adoptUser = useCallback((u: SessionUser) => setUser(u), []);
+
+  return <AuthContext.Provider value={{ user, ready, login, startRegistration, verifyRegistration, adoptUser, logout, updateProfile }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

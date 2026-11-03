@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Droplets, Gem, Gift, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/client/api";
@@ -13,7 +13,6 @@ type Mode = "login" | "register" | "forgot";
 
 function LoginInner() {
   const { login, startRegistration, verifyRegistration } = useAuth();
-  const router = useRouter();
   const params = useSearchParams();
   const redirect = params.get("redirect");
   const dest = redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/account";
@@ -38,10 +37,12 @@ function LoginInner() {
     setError(null);
     setInfo(null);
     setBusy(true);
+    let leaving = false;
     try {
       if (mode === "login") {
         await login(f.email, f.password);
-        router.push(dest);
+        leaving = true;
+        window.location.assign(dest); // full page load: always lands on the page with the fresh session, never on a cached redirect
       } else if (mode === "register") {
         if (step === "form") {
           const r = await startRegistration({ name: f.name, email: f.email, phone: f.phone || undefined, password: f.password });
@@ -49,7 +50,8 @@ function LoginInner() {
           setInfo(r.devOtp ? `Local development: your code is ${r.devOtp}` : `We emailed a 6-digit code to ${f.email}.`);
         } else {
           await verifyRegistration(f.email, f.otp);
-          router.push(dest);
+          leaving = true;
+          window.location.assign(dest);
         }
       } else if (step === "form") {
         const r = await api<{ devOtp?: string }>("/api/auth/forgot", { method: "POST", body: { email: f.email } });
@@ -64,7 +66,7 @@ function LoginInner() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
-      setBusy(false);
+      if (!leaving) setBusy(false);
     }
   };
 

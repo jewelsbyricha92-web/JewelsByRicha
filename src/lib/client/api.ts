@@ -14,8 +14,10 @@ export async function api<T = unknown>(url: string, opts: { method?: string; bod
       body: opts.body ? JSON.stringify(opts.body) : undefined,
       credentials: "same-origin",
       cache: "no-store",
+      signal: AbortSignal.timeout(30_000), // never leave a button on "Please wait…" forever
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "TimeoutError") throw new ApiClientError("The server is taking too long to respond. Please try again.", 0);
     throw new ApiClientError("Can't reach the server. Check your connection and try again.", 0);
   }
   const data = await res.json().catch(() => null);
